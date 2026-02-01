@@ -2,69 +2,120 @@ import Chat from "../models/Chat.js";
 import Message from "../models/Message.js";
 
 // @route   GET /api/messages/:chatId
+// @desc    Get messages for a chat with pagination
 export const getMessages = async (req, res) => {
   try {
     const { chatId } = req.params;
+    const { page = 1, limit = 50 } = req.query;
+
+    if (!chatId) {
+      return res.status(400).json({ message: "Chat ID is required" });
+    }
 
     const messages = await Message.find({ chatId })
       .populate("senderId", "_id name email avatar")
-      .sort({ createdAt: 1 });
+      .sort({ createdAt: 1 })
+      .limit(parseInt(limit))
+      .skip((parseInt(page) - 1) * parseInt(limit))
+      .lean(); // Optimize performance
 
     return res.status(200).json(messages);
   } catch (error) {
-    return res.status(500).json({ message: error.message });
+    console.error("🔥 GET MESSAGES ERROR:", error);
+    return res.status(500).json({ message: "Error fetching messages" });
   }
 };
 
 // @route   POST /api/messages
+// @desc    Send a new message
 export const sendMessage = async (req, res) => {
   try {
-    const { chatId, text, type } = req.body;
+    const { chatId, text, type, attachments } = req.body;
 
+    // Validation
     if (!chatId) {
-      return res.status(400).json({ message: "chatId is required" });
+      return res.status(400).json({ message: "Chat ID is required" });
     }
 
-    if (!text || text.trim() === "") {
-      return res.status(400).json({ message: "Message text cannot be empty" });
+    const textTrimmed = text ? text.trim() : "";
+    
+    if (!textTrimmed && (!attachments || attachments.length === 0)) {
+      return res.status(400).json({ message: "Message must have text or attachments" });
     }
 
+    // Validate text length
+    if (textTrimmed && textTrimmed.length > 5000) {
+      return res.status(400).json({ message: "Message cannot exceed 5000 characters" });
+    }
+
+    // Validate message type
+    const validTypes = ["text", "image", "video", "file"];
+    const messageType = type || "text";
+    if (!validTypes.includes(messageType)) {
+      return res.status(400).json({ message: "Invalid message type" });
+    }
+
+    // Create message
     const msg = await Message.create({
       chatId,
       senderId: req.user._id,
-      text,
-      type: type || "text",
+      text: textTrimmed,
+      type: messageType,
+      attachments: attachments || [],
       seenBy: [req.user._id],
     });
 
+    // Update last message in chat
+    let lastMsgText = textTrimmed;
+    if (!textTrimmed && attachments?.length > 0) {
+      lastMsgText = messageType === 'image' ? '📷 Image' : '📎 Attachment';
+    }
+
     await Chat.findByIdAndUpdate(chatId, {
-      lastMessage: text,
+      lastMessage: lastMsgText.substring(0, 100), // Limit preview length
       lastMessageAt: new Date(),
     });
 
-    const populated = await Message.findById(msg._id).populate(
-      "senderId",
-      "_id name email avatar"
-    );
+    // Populate sender info
+    const populated = await Message.findById(msg._id)
+      .populate("senderId", "_id name email avatar")
+      .lean();
 
     return res.status(201).json(populated);
   } catch (error) {
-    return res.status(500).json({ message: error.message });
+    console.error("🔥 SEND MESSAGE ERROR:", error);
+    
+    if (error.name === "ValidationError") {
+      const messages = Object.values(error.errors).map(err => err.message);
+      return res.status(400).json({ message: messages.join(", ") });
+    }
+    
+    return res.status(500).json({ message: "Error sending message" });
   }
 };
 
 // @route   PUT /api/messages/seen/:chatId
+// @desc    Mark all messages in a chat as seen
 export const markAsSeen = async (req, res) => {
   try {
     const { chatId } = req.params;
 
-    await Message.updateMany(
+    if (!chatId) {
+      return res.status(400).json({ message: "Chat ID is required" });
+    }
+
+    // Update all messages in the chat that haven't been seen by this user
+    const result = await Message.updateMany(
       { chatId, seenBy: { $ne: req.user._id } },
-      { $push: { seenBy: req.user._id } }
+      { $addToSet: { seenBy: req.user._id } }
     );
 
-    return res.status(200).json({ message: "Messages marked as seen" });
+    return res.status(200).json({ 
+      message: "Messages marked as seen",
+      modifiedCount: result.modifiedCount 
+    });
   } catch (error) {
-    return res.status(500).json({ message: error.message });
+    console.error("🔥 MARK AS SEEN ERROR:", error);
+    return res.status(500).json({ message: "Error marking messages as seen" });
   }
 };

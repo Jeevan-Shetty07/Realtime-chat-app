@@ -7,8 +7,8 @@ export const fetchMessages = async (chatId) => {
 };
 
 // Send message (REST)
-export const sendMessageApi = async ({ chatId, text, type = "text" }) => {
-  const res = await API.post("/api/messages", { chatId, text, type });
+export const sendMessageApi = async ({ chatId, text, type = "text", attachments = [] }) => {
+  const res = await API.post("/api/messages", { chatId, text, type, attachments });
   return res.data;
 };
 

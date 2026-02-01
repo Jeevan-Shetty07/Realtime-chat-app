@@ -17,3 +17,9 @@ export const fetchMyChats = async () => {
   const res = await API.get("/api/chats");
   return res.data;
 };
+
+// Create Group Chat
+export const createGroupChat = async (groupData) => {
+  const res = await API.post("/api/chats/group", groupData);
+  return res.data;
+};

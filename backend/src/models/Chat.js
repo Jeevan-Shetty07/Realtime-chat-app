@@ -9,10 +9,30 @@ const chatSchema = new mongoose.Schema(
         required: true,
       },
     ],
+    
+    // Group Chat Fields
+    isGroupChat: {
+      type: Boolean,
+      default: false,
+    },
+    
+    chatName: {
+      type: String,
+      trim: true,
+      default: "",
+      maxlength: [100, "Chat name cannot exceed 100 characters"]
+    },
+    
+    groupAdmin: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      default: null,
+    },
 
     lastMessage: {
       type: String,
       default: "",
+      maxlength: [500, "Last message preview cannot exceed 500 characters"]
     },
 
     lastMessageAt: {
@@ -20,9 +40,33 @@ const chatSchema = new mongoose.Schema(
       default: null,
     },
   },
-  { timestamps: true }
+  { 
+    timestamps: true,
+    toJSON: { virtuals: true },
+    toObject: { virtuals: true }
+  }
 );
+
+// Indexes for performance
+chatSchema.index({ members: 1 });
+chatSchema.index({ updatedAt: -1 });
+chatSchema.index({ isGroupChat: 1 });
+
+// Validation: Group chats must have a name
+chatSchema.pre("save", function (next) {
+  if (this.isGroupChat && (!this.chatName || this.chatName.trim() === "")) {
+    next(new Error("Group chat must have a name"));
+  } else {
+    next();
+  }
+});
+
+// Virtual for participant count
+chatSchema.virtual("participantCount").get(function () {
+  return this.members ? this.members.length : 0;
+});
 
 const Chat = mongoose.model("Chat", chatSchema);
 
 export default Chat;
+
