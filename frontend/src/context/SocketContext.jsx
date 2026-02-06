@@ -12,7 +12,7 @@ export const SocketProvider = ({ children, user }) => {
   });
 
   const socket = useMemo(() => {
-    return io(import.meta.env.VITE_API_URL || "http://localhost:5000", {
+    return io(import.meta.env.VITE_API_URL || "http://localhost:5001", {
       transports: ["websocket"],
     });
   }, []);

@@ -21,9 +21,23 @@ const userSchema = new mongoose.Schema(
         "Please provide a valid email address"
       ]
     },
+    username: {
+      type: String,
+      unique: true,
+      sparse: true, // Allows null/undefined for existing users initially
+      trim: true,
+      minlength: [3, "Username must be at least 3 characters"],
+      maxlength: [20, "Username cannot exceed 20 characters"],
+      match: [/^[a-zA-Z0-9_]+$/, "Username can only contain letters, numbers, and underscores"]
+    },
+    clerkId: {
+      type: String,
+      unique: true,
+      sparse: true,
+    },
     password: { 
       type: String, 
-      required: [true, "Password is required"], 
+      required: false, 
       minlength: [6, "Password must be at least 6 characters"], 
       select: false 
     },
@@ -53,20 +67,18 @@ const userSchema = new mongoose.Schema(
 );
 
 // Indexes for performance
-userSchema.index({ email: 1 });
 userSchema.index({ isOnline: 1 });
 userSchema.index({ createdAt: -1 });
 
 // Hash password before saving
-userSchema.pre("save", async function (next) {
-  if (!this.isModified("password")) return next();
+userSchema.pre("save", async function () {
+  if (!this.isModified("password")) return;
 
   try {
     const salt = await bcrypt.genSalt(10);
     this.password = await bcrypt.hash(this.password, salt);
-    next();
   } catch (error) {
-    next(error);
+    throw error;
   }
 });
 

@@ -1,0 +1,39 @@
+# Root .gitignore for Realtime-chat-app
+
+# Node
+node_modules/
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+
+# Build outputs
+dist/
+build/
+
+# Vite
+.vite/
+
+# Environment files
+.env
+.env.*
+!.env.example
+
+# Frontend / Backend folders
+frontend/node_modules/
+frontend/dist/
+backend/node_modules/
+
+# Editor / OS files
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+*.swp
+
+# Coverage
+coverage/
+
+# Misc
+*.local

@@ -1,15 +1,15 @@
 import { useContext } from "react";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
-
 import { AuthContext, AuthProvider } from "./context/AuthContext";
 import { SocketProvider } from "./context/SocketContext";
-
-import ProtectedRoute from "./components/common/ProtectedRoute";
-
-import Login from "./pages/Login";
-import Register from "./pages/Register";
 import ChatDashboard from "./pages/ChatDashboard";
 import Profile from "./pages/Profile";
+import { ClerkProvider, SignedIn, SignedOut, RedirectToSignIn, SignIn, SignUp } from "@clerk/clerk-react";
+
+if (!import.meta.env.VITE_CLERK_PUBLISHABLE_KEY) {
+  throw new Error("Missing Publishable Key");
+}
+const PUBLISHABLE_KEY = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY;
 
 const AppRoutes = () => {
   const { user, loadingAuth } = useContext(AuthContext);
@@ -20,21 +20,32 @@ const AppRoutes = () => {
         <Route
           path="/"
           element={
-            <ProtectedRoute user={user} loadingAuth={loadingAuth}>
-              <ChatDashboard />
-            </ProtectedRoute>
+            <>
+              <SignedIn>
+                {loadingAuth ? (
+                  <div className="flex-center" style={{ height: "100vh", color: "white" }}>
+                    <div className="loader">Loading your profile...</div>
+                  </div>
+                ) : (
+                  <ChatDashboard />
+                )}
+              </SignedIn>
+              <SignedOut>
+                <RedirectToSignIn />
+              </SignedOut>
+            </>
           }
         />
 
-        <Route path="/login" element={<Login />} />
-        <Route path="/register" element={<Register />} />
+        <Route path="/login/*" element={<div className="flex-center" style={{ minHeight: "100vh" }}><SignIn routing="path" path="/login" /></div>} />
+        <Route path="/register/*" element={<div className="flex-center" style={{ minHeight: "100vh" }}><SignUp routing="path" path="/register" /></div>} />
 
         <Route
           path="/profile"
           element={
-            <ProtectedRoute user={user} loadingAuth={loadingAuth}>
+            <SignedIn>
               <Profile />
-            </ProtectedRoute>
+            </SignedIn>
           }
         />
       </Routes>
@@ -44,11 +55,13 @@ const AppRoutes = () => {
 
 const App = () => {
   return (
-    <AuthProvider>
-      <BrowserRouter>
-        <AppRoutes />
-      </BrowserRouter>
-    </AuthProvider>
+    <ClerkProvider publishableKey={PUBLISHABLE_KEY}>
+      <AuthProvider>
+        <BrowserRouter>
+          <AppRoutes />
+        </BrowserRouter>
+      </AuthProvider>
+    </ClerkProvider>
   );
 };
 

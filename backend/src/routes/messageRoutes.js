@@ -1,15 +1,17 @@
 import express from "express";
-import { protect } from "../middleware/authMiddleware.js";
+import { clerkProtect } from "../middleware/clerkMiddleware.js";
 import {
   getMessages,
   markAsSeen,
   sendMessage,
+  addReaction,
 } from "../controllers/messageController.js";
 
 const router = express.Router();
 
-router.get("/:chatId", protect, getMessages);
-router.post("/", protect, sendMessage);
-router.put("/seen/:chatId", protect, markAsSeen);
+router.get("/:chatId", clerkProtect, getMessages);
+router.post("/", clerkProtect, sendMessage);
+router.put("/seen/:chatId", clerkProtect, markAsSeen);
+router.put("/reaction/:messageId", clerkProtect, addReaction);
 
 export default router;

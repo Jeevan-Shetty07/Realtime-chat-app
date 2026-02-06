@@ -17,3 +17,9 @@ export const markChatSeen = async (chatId) => {
   const res = await API.put(`/api/messages/seen/${chatId}`);
   return res.data;
 };
+
+// Add Reaction
+export const addReaction = async (messageId, emoji) => {
+    const res = await API.put(`/api/messages/reaction/${messageId}`, { emoji });
+    return res.data;
+};

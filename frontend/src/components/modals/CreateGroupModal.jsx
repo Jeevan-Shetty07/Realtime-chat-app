@@ -1,4 +1,5 @@
 import { useState } from "react";
+import ReactDOM from "react-dom";
 import "../../styles/Chat.css";
 import { createGroupChat } from "../../api/chatApi";
 
@@ -23,7 +24,6 @@ const CreateGroupModal = ({ onClose, users, onGroupCreated }) => {
       setLoading(true);
       const userIds = selectedUsers.map((u) => u._id);
       
-      // API call (we need to update api/chatApi.js to include createGroupChat)
       const data = await createGroupChat({ name: groupName, users: JSON.stringify(userIds) });
       
       onGroupCreated(data);
@@ -40,7 +40,7 @@ const CreateGroupModal = ({ onClose, users, onGroupCreated }) => {
     u.name.toLowerCase().includes(search.toLowerCase())
   );
 
-  return (
+  return ReactDOM.createPortal(
     <div className="modal-overlay" onClick={onClose}>
       <div className="modal-content" onClick={(e) => e.stopPropagation()}>
         <div className="modal-header">
@@ -115,7 +115,8 @@ const CreateGroupModal = ({ onClose, users, onGroupCreated }) => {
         </div>
 
       </div>
-    </div>
+    </div>,
+    document.body
   );
 };
 

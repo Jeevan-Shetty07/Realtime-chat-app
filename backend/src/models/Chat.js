@@ -23,10 +23,16 @@ const chatSchema = new mongoose.Schema(
       maxlength: [100, "Chat name cannot exceed 100 characters"]
     },
     
-    groupAdmin: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "User",
-      default: null,
+    groupAdmins: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "User",
+      },
+    ],
+
+    groupImage: {
+      type: String,
+      default: "",
     },
 
     lastMessage: {

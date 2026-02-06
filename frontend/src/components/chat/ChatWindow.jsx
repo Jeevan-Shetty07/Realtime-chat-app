@@ -11,6 +11,7 @@ const ChatWindow = ({
   typingState,
   handleTyping,
   onlineUsers,
+  onToggleSidebar,
 }) => {
   const [text, setText] = useState("");
   const [uploading, setUploading] = useState(false);
@@ -98,12 +99,19 @@ const ChatWindow = ({
   }
 
   return (
-    <div className="chat-window">
+    <div className="chat-window glass-panel">
       {/* Header */}
       <div className="chat-room-header">
+        <button className="mobile-toggle-btn" onClick={onToggleSidebar}>
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+        </button>
         <div className="header-user-info">
           <div className="user-avatar-sm" style={{ background: isGroup ? "#ec4899" : (headerStatus === "Online" ? "#22c55e" : "#6366f1") }}>
-            {headerAvatar}
+            {isGroup ? "#" : (
+              otherUser?.avatar ? (
+                <img src={`http://localhost:5001${otherUser.avatar}`} alt="avatar" style={{ width: "100%", height: "100%", borderRadius: "50%", objectFit: "cover" }} />
+              ) : headerAvatar
+            )}
           </div>
           <div>
             <div style={{ fontWeight: "700", color: "white" }}>
@@ -138,23 +146,51 @@ const ChatWindow = ({
               <div
                 key={m._id}
                 className={`message-bubble ${isMine ? "msg-sent" : "msg-received"}`}
+                onDoubleClick={() => addReaction(m._id, "❤️")} // Quick reaction
+                title="Double click to like"
               >
-                {!isMine && isGroup && <div style={{ fontSize: "0.75rem", color: "#ec4899", marginBottom: "4px", fontWeight: "600" }}>{senderName}</div>}
+                {!isMine && (
+                  <div className="msg-sender-info">
+                    <div className="user-avatar-xs">
+                      {m.senderId?.avatar ? (
+                        <img src={`http://localhost:5001${m.senderId.avatar}`} alt="avatar" />
+                      ) : (
+                        m.senderId?.name?.charAt(0).toUpperCase() || "U"
+                      )}
+                    </div>
+                    {isGroup && <span className="msg-sender-name">{senderName}</span>}
+                  </div>
+                )}
                 
                 {/* Image Rendering */}
                 {m.attachments?.length > 0 ? (
-                    m.attachments.map((url, i) => (
-                        <div key={i} style={{ marginBottom: "6px" }}>
-                            <img 
-                                src={`http://localhost:5000${url}`} 
-                                alt="attachment" 
-                                style={{ maxWidth: "100%", borderRadius: "12px", border: "1px solid rgba(255,255,255,0.1)" }} 
-                            />
-                        </div>
-                    ))
+                    m.attachments.map((att, i) => {
+                        // Handle both old format (string) and new format (object)
+                        const src = typeof att === 'string' ? att : att.url;
+                        return (
+                          <div key={i} style={{ marginBottom: "6px" }}>
+                              <img 
+                                  src={`http://localhost:5001${src}`} 
+                                  alt="attachment" 
+                                  style={{ maxWidth: "100%", borderRadius: "12px", border: "1px solid rgba(255,255,255,0.1)" }} 
+                              />
+                          </div>
+                       );
+                    })
                 ) : null}
 
                 {m.text && <div className="msg-text">{m.text}</div>}
+                
+                {/* Reactions Display */}
+                {m.reactions && m.reactions.length > 0 && (
+                    <div className="reactions-row" style={{ display: "flex", gap: "2px", marginTop: "4px", justifyContent: isMine ? "flex-end" : "flex-start" }}>
+                        {m.reactions.map((r, idx) => (
+                            <span key={idx} style={{ fontSize: "12px", background: "rgba(0,0,0,0.2)", borderRadius: "10px", padding: "2px 6px" }}>
+                                {r.emoji}
+                            </span>
+                        ))}
+                    </div>
+                )}
                 
                 <div className="msg-meta">
                     {formatTime(m.createdAt)}

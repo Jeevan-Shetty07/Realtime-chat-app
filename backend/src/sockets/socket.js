@@ -127,6 +127,16 @@ export const setupSocket = (server) => {
       }
     });
 
+    // Handle Message Updates (Reactions, Edits)
+    socket.on("messageUpdated", ({ chatId, message }) => {
+      try {
+        if (!chatId || !message) return;
+        socket.to(chatId).emit("messageUpdated", { chatId, message });
+      } catch (error) {
+        console.error("Socket messageUpdated error:", error);
+      }
+    });
+
     // Handle disconnection
     socket.on("disconnect", async () => {
       try {

@@ -219,7 +219,32 @@
   75% { transform: translateX(10px); }
 }
 
+.auth-divider {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: var(--text-muted);
+  font-size: 0.85rem;
+  margin: 12px 0;
+  width: 100%;
+}
+
+.auth-divider::before,
+.auth-divider::after {
+  content: "";
+  flex: 1;
+  height: 2px;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 2px;
+}
+
 /* Responsive Design */
+@media (max-width: 640px) {
+  .auth-container {
+    padding: 20px;
+  }
+}
+
 @media (max-width: 480px) {
   .auth-card {
     padding: 36px 28px;

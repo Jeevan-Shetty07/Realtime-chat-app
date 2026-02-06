@@ -1,20 +1,25 @@
 import { createContext, useEffect, useState } from "react";
+import { useUser, useAuth } from "@clerk/clerk-react";
 import { getMe } from "../api/authApi";
+import { setAuthToken } from "../api/axios";
 
 export const AuthContext = createContext(null);
 
 export const AuthProvider = ({ children }) => {
+  const { user: clerkUser, isLoaded: isUserLoaded } = useUser();
+  const { getToken, signOut, isLoaded: isAuthLoaded } = useAuth();
   const [user, setUser] = useState(null);
   const [loadingAuth, setLoadingAuth] = useState(true);
 
-  const logout = () => {
-    localStorage.removeItem("token");
+  const logout = async () => {
+    await signOut();
+    setAuthToken(null);
     setUser(null);
   };
 
   const loadUser = async () => {
     try {
-      const token = localStorage.getItem("token");
+      const token = await getToken();
 
       if (!token) {
         setUser(null);
@@ -22,11 +27,11 @@ export const AuthProvider = ({ children }) => {
         return;
       }
 
+      setAuthToken(token);
       const data = await getMe();
       setUser(data.user);
     } catch (error) {
-      // token invalid or server error
-      localStorage.removeItem("token");
+      console.error("Load user error:", error);
       setUser(null);
     } finally {
       setLoadingAuth(false);
@@ -34,8 +39,15 @@ export const AuthProvider = ({ children }) => {
   };
 
   useEffect(() => {
-    loadUser();
-  }, []);
+    if (isUserLoaded && isAuthLoaded) {
+        if (clerkUser) {
+            loadUser();
+        } else {
+            setUser(null);
+            setLoadingAuth(false);
+        }
+    }
+  }, [clerkUser, isUserLoaded, isAuthLoaded]);
 
   return (
     <AuthContext.Provider

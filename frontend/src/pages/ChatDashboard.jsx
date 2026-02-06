@@ -5,6 +5,7 @@ import { accessChat, fetchMyChats, fetchUsers } from "../api/chatApi";
 import { fetchMessages, markChatSeen, sendMessageApi } from "../api/messageApi";
 import Sidebar from "../components/sidebar/Sidebar";
 import ChatWindow from "../components/chat/ChatWindow";
+import ProfileModal from "../components/modals/ProfileModal";
 import "../styles/Chat.css";
 
 const ChatDashboard = () => {
@@ -19,6 +20,21 @@ const ChatDashboard = () => {
   const [loadingChats, setLoadingChats] = useState(true);
   const [loadingMessages, setLoadingMessages] = useState(false);
   const [typingTimeoutId, setTypingTimeoutId] = useState(null);
+  const [showSidebar, setShowSidebar] = useState(true);
+
+  // Responsive handling
+  useEffect(() => {
+    const handleResize = () => {
+      if (window.innerWidth <= 768) {
+        setShowSidebar(false);
+      } else {
+        setShowSidebar(true);
+      }
+    };
+    handleResize(); // Initial check
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
 
   // Load users + my chats
   useEffect(() => {
@@ -97,9 +113,17 @@ const ChatDashboard = () => {
     };
 
     socket.on("receiveMessage", handler);
+    
+    // Handle updates (Reactions)
+    socket.on("messageUpdated", ({ chatId, message }) => {
+        if (activeChat?._id === chatId) {
+            setMessages(prev => prev.map(m => m._id === message._id ? message : m));
+        }
+    });
 
     return () => {
       socket.off("receiveMessage", handler);
+      socket.off("messageUpdated");
     };
   }, [socket, activeChat]);
 
@@ -183,21 +207,38 @@ const ChatDashboard = () => {
     }
   };
 
+  if (!user?.username) {
+    return (
+        <div className="onboarding-screen">
+          <div className="chat-bg"></div>
+          <ProfileModal isForced={true} onClose={() => {}} />
+        </div>
+    );
+  }
+
   return (
-    <div className="chat-container">
+    <div className={`chat-container ${!showSidebar ? "sidebar-hidden" : ""}`}>
       <div className="chat-bg"></div>
       
-      <Sidebar
-        user={user}
-        logout={logout}
-        onlineUsers={onlineUsers}
-        myChats={myChats}
-        activeChat={activeChat}
-        setActiveChat={setActiveChat}
-        users={users}
-        startChatWithUser={startChatWithUser}
-        onNewGroup={handleNewGroup}
-      />
+      {showSidebar && (
+        <Sidebar
+          user={user}
+          logout={logout}
+          onlineUsers={onlineUsers}
+          myChats={myChats}
+          activeChat={activeChat}
+          setActiveChat={(chat) => {
+            setActiveChat(chat);
+            if (window.innerWidth <= 768) setShowSidebar(false);
+          }}
+          users={users}
+          startChatWithUser={async (uid) => {
+            await startChatWithUser(uid);
+            if (window.innerWidth <= 768) setShowSidebar(false);
+          }}
+          onNewGroup={handleNewGroup}
+        />
+      )}
 
       <ChatWindow
         user={user}
@@ -208,6 +249,7 @@ const ChatDashboard = () => {
         typingState={typingState}
         handleTyping={handleTyping}
         onlineUsers={onlineUsers}
+        onToggleSidebar={() => setShowSidebar(!showSidebar)}
       />
     </div>
   );

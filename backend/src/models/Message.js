@@ -32,16 +32,13 @@ const messageSchema = new mongoose.Schema(
     },
     
     // Media attachments (URLs)
+    // Media attachments
     attachments: [
       {
-         type: String,
-         validate: {
-           validator: function(v) {
-             // Basic URL validation
-             return !v || v.startsWith('/public/') || v.startsWith('http');
-           },
-           message: "Invalid attachment URL"
-         }
+        url: { type: String, required: true },
+        fileType: { type: String, default: "image" }, // image, video, raw
+        publicId: { type: String }, // For Cloudinary/Storage deletion
+        originalName: { type: String }
       }
     ],
 

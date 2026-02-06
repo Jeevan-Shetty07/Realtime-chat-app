@@ -12,8 +12,14 @@ export const loginUser = async (data) => {
   return res.data;
 };
 
+// Google Login
+export const googleLoginApi = async (tokenId) => {
+  const res = await API.post("/api/auth/google", { tokenId });
+  return res.data;
+};
+
 // Get logged in user
 export const getMe = async () => {
-  const res = await API.get("/api/auth/me");
+  const res = await API.get(`/api/auth/me?t=${Date.now()}`);
   return res.data;
 };

@@ -1,6 +1,7 @@
 import { useState } from "react";
 import "../../styles/Chat.css";
 import CreateGroupModal from "../modals/CreateGroupModal";
+import ProfileModal from "../modals/ProfileModal";
 
 const Sidebar = ({
   user,
@@ -11,10 +12,12 @@ const Sidebar = ({
   setActiveChat,
   users,
   startChatWithUser,
+  onNewGroup,
 }) => {
   const [search, setSearch] = useState("");
   const [activeTab, setActiveTab] = useState("chats"); // 'chats' or 'users'
   const [showGroupModal, setShowGroupModal] = useState(false);
+  const [showProfileModal, setShowProfileModal] = useState(false);
 
   const filteredUsers = users.filter((u) => {
     const q = search.toLowerCase();
@@ -35,6 +38,7 @@ const Sidebar = ({
     const other = chat.members.find((m) => m._id !== user?._id);
     return {
       name: other?.name || "Unknown",
+      avatarLink: other?.avatar,
       avatar: other?.name?.charAt(0).toUpperCase(),
       isGroup: false,
       online: other ? onlineUsers.includes(other._id) : false
@@ -42,17 +46,21 @@ const Sidebar = ({
   };
 
   return (
-    <div className="sidebar">
+    <div className="sidebar glass-panel">
       {/* Header */}
       <div className="sidebar-header">
-        <div className="user-profile-summary">
+        <div className="user-profile-summary" onClick={() => setShowProfileModal(true)} style={{ cursor: "pointer" }}>
           <div className="user-avatar-sm">
-            {user?.name?.charAt(0).toUpperCase()}
+            {user?.avatar ? (
+              <img src={`http://localhost:5001${user.avatar}`} alt="avatar" style={{ width: "100%", height: "100%", borderRadius: "50%", objectFit: "cover" }} />
+            ) : (
+              user?.name?.charAt(0).toUpperCase()
+            )}
           </div>
           <div>
             <div style={{ fontWeight: "700", color: "white" }}>{user?.name}</div>
             <div style={{ fontSize: "12px", color: "var(--text-secondary)" }}>
-              My Status: Online
+              My Profile
             </div>
           </div>
         </div>
@@ -132,7 +140,11 @@ const Sidebar = ({
                   <div className="user-avatar-sm" style={{ 
                       background: info.isGroup ? "#ec4899" : (info.online ? "#22c55e" : "#6366f1") 
                   }}>
-                    {info.isGroup ? "#" : info.avatar}
+                    {info.isGroup ? "#" : (
+                      info.avatarLink ? (
+                        <img src={`http://localhost:5001${info.avatarLink}`} alt="avatar" style={{ width: "100%", height: "100%", borderRadius: "50%", objectFit: "cover" }} />
+                      ) : info.avatar
+                    )}
                   </div>
                   <div className="chat-info">
                     <div className="chat-name-row">
@@ -147,6 +159,11 @@ const Sidebar = ({
             })
           )
         ) : (
+          filteredUsers.length === 0 ? (
+            <div style={{ padding: "20px", textAlign: "center", color: "#64748b" }}>
+              No other users found
+            </div>
+          ) : (
           filteredUsers.map((u) => (
             <div
               key={u._id}
@@ -154,14 +171,19 @@ const Sidebar = ({
               onClick={() => startChatWithUser(u._id)}
             >
              <div className="user-avatar-sm" style={{ background: "#ec4899" }}>
-                {u.name.charAt(0).toUpperCase()}
+                {u.avatar ? (
+                  <img src={`http://localhost:5001${u.avatar}`} alt="avatar" style={{ width: "100%", height: "100%", borderRadius: "50%", objectFit: "cover" }} />
+                ) : (
+                  u.name.charAt(0).toUpperCase()
+                )}
              </div>
               <div className="chat-info">
                 <div className="chat-name">{u.name}</div>
-                <div className="chat-last-msg">{u.email}</div>
+                <div className="chat-last-msg">Available</div>
               </div>
             </div>
           ))
+          )
         )}
       </div>
 
@@ -175,6 +197,9 @@ const Sidebar = ({
                 setShowGroupModal(false);
             }}
         />
+      )}
+      {showProfileModal && (
+        <ProfileModal onClose={() => setShowProfileModal(false)} />
       )}
     </div>
   );

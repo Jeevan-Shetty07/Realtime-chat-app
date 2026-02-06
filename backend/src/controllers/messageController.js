@@ -119,3 +119,44 @@ export const markAsSeen = async (req, res) => {
     return res.status(500).json({ message: "Error marking messages as seen" });
   }
 };
+
+// @route   PUT /api/messages/reaction/:messageId
+// @desc    Add or remove a reaction to a message
+export const addReaction = async (req, res) => {
+  try {
+    const { messageId } = req.params;
+    const { emoji } = req.body;
+
+    if (!emoji) {
+      return res.status(400).json({ message: "Emoji is required" });
+    }
+
+    const message = await Message.findById(messageId);
+
+    if (!message) {
+      return res.status(404).json({ message: "Message not found" });
+    }
+
+    // Check if user already reacted with THIS emoji
+    const existingReactionIndex = message.reactions.findIndex(
+      (r) => r.user.toString() === req.user._id.toString() && r.emoji === emoji
+    );
+
+    if (existingReactionIndex > -1) {
+      // Toggle off (remove reaction if already exists)
+      message.reactions.splice(existingReactionIndex, 1);
+    } else {
+      // Add new reaction
+      // Optional: Limit to one reaction per user? Or allow multiple? 
+      // Most apps allow 1 per user, or multiple. Let's allow multiple distinct emojis.
+       message.reactions.push({ user: req.user._id, emoji });
+    }
+
+    await message.save();
+
+    return res.status(200).json(message);
+  } catch (error) {
+    console.error("🔥 ADD REACTION ERROR:", error);
+    return res.status(500).json({ message: "Error adding reaction" });
+  }
+};
