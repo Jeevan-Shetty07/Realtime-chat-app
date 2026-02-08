@@ -158,9 +158,9 @@ const ChatWindow = ({
     return typeof u === 'string' ? u : u._id?.toString() || u.toString();
   };
 
-  const isBlockedByMe = user?.blockedUsers?.some(bid => getUserId(bid) === getUserId(otherUser?._id));
-  const isBlockingMe = otherUser?.blockedUsers?.some(bid => getUserId(bid) === getUserId(user?._id));
-  const isBlocked = !!(otherUser && (isBlockedByMe || isBlockingMe));
+  const isBlockedByMe = !!activeChat.isBlockedByMe;
+  const isBlockingMe = !!activeChat.isBlockingMe;
+  const isBlocked = isBlockedByMe || isBlockingMe;
 
   const handleBlockToggle = async () => {
     if (!otherUser) return;

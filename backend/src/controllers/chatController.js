@@ -58,7 +58,17 @@ export const accessChat = async (req, res) => {
 
     if (chat) {
       console.log("✅ accessChat: Found existing chat", chat._id);
-      return res.status(200).json(chat);
+      
+      const chatObj = chat.toObject();
+      const me = chat.members.find(m => m._id.toString() === req.user._id.toString());
+      const other = chat.members.find(m => m._id.toString() !== req.user._id.toString());
+      
+      if (!chat.isGroupChat && other) {
+          chatObj.isBlockedByMe = me?.blockedUsers?.some(bid => bid.toString() === other._id.toString());
+          chatObj.isBlockingMe = other?.blockedUsers?.some(bid => bid.toString() === req.user._id.toString());
+      }
+      
+      return res.status(200).json(chatObj);
     }
 
     // Create new chat - wrapping in a try-catch for potential race conditions if indexes aren't perfect
@@ -73,10 +83,19 @@ export const accessChat = async (req, res) => {
 
         chat = await Chat.findById(newChat._id).populate(
           "members",
-          "_id name email avatar isOnline lastSeen username about isAdmin"
+          "_id name email avatar isOnline lastSeen username about isAdmin blockedUsers"
         );
 
-        return res.status(201).json(chat);
+        const chatObj = chat.toObject();
+        const me = chat.members.find(m => m._id.toString() === req.user._id.toString());
+        const other = chat.members.find(m => m._id.toString() !== req.user._id.toString());
+        
+        if (other) {
+            chatObj.isBlockedByMe = me?.blockedUsers?.some(bid => bid.toString() === other._id.toString());
+            chatObj.isBlockingMe = other?.blockedUsers?.some(bid => bid.toString() === req.user._id.toString());
+        }
+
+        return res.status(201).json(chatObj);
     } catch (createError) {
         // If creation failed (likely due to a concurrent request that created it first), try finding it one last time
         console.warn("⚠️ accessChat: Creation conflict, searching again...");
@@ -86,7 +105,17 @@ export const accessChat = async (req, res) => {
             $expr: { $eq: [{ $size: "$members" }, 2] },
         }).populate("members", "_id name email avatar isOnline lastSeen username about isAdmin blockedUsers");
 
-        if (chat) return res.status(200).json(chat);
+        if (chat) {
+            const chatObj = chat.toObject();
+            const me = chat.members.find(m => m._id.toString() === req.user._id.toString());
+            const other = chat.members.find(m => m._id.toString() !== req.user._id.toString());
+            
+            if (other) {
+                chatObj.isBlockedByMe = me?.blockedUsers?.some(bid => bid.toString() === other._id.toString());
+                chatObj.isBlockingMe = other?.blockedUsers?.some(bid => bid.toString() === req.user._id.toString());
+            }
+            return res.status(200).json(chatObj);
+        }
         throw createError;
     }
   } catch (error) {
@@ -119,9 +148,20 @@ export const getMyChats = async (req, res) => {
                 seenBy: { $ne: req.user._id }
             });
             
-            // Convert to plain object and add unreadCount
+            // Convert to plain object and add unreadCount + block status
             const chatObj = chat.toObject();
             chatObj.unreadCount = unreadCount;
+            
+            if (!chat.isGroupChat) {
+                const me = chat.members.find(m => m._id.toString() === req.user._id.toString());
+                const other = chat.members.find(m => m._id.toString() !== req.user._id.toString());
+                
+                if (other) {
+                    chatObj.isBlockedByMe = me?.blockedUsers?.some(bid => bid.toString() === other._id.toString());
+                    chatObj.isBlockingMe = other?.blockedUsers?.some(bid => bid.toString() === req.user._id.toString());
+                }
+            }
+            
             return chatObj;
         })
     );
@@ -187,7 +227,7 @@ export const createGroupChat = async (req, res) => {
     });
 
     const fullGroupChat = await Chat.findById(groupChat._id)
-      .populate("members", "_id name email avatar username about isAdmin")
+      .populate("members", "_id name email avatar username about isAdmin blockedUsers")
       .populate("groupAdmins", "_id name email");
 
     return res.status(201).json(fullGroupChat);
