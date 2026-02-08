@@ -22,7 +22,7 @@ router.post("/", unifiedProtect, upload.single("file"), (req, res) => {
     
     res.send({
       message: "File uploaded successfully",
-      url: `/public/images/${req.file.filename}`,
+      url: req.file.path, // Cloudinary URL provided by multer-storage-cloudinary
       fileType,
       originalName: req.file.originalname
     });
