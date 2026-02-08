@@ -56,12 +56,11 @@ const ChatWindow = ({
       }
     };
 
-    document.addEventListener("mousedown", handleClickOutside);
-    document.addEventListener("touchstart", handleClickOutside); // Support mobile tap
+    // Use 'click' instead of 'mousedown' to ensure internal clicks fire first
+    document.addEventListener("click", handleClickOutside);
 
     return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-      document.removeEventListener("touchstart", handleClickOutside);
+      document.removeEventListener("click", handleClickOutside);
     };
   }, []);
 
@@ -249,14 +248,23 @@ const ChatWindow = ({
               {showOptionsMenu && (
                 <div 
                     className="options-dropdown glass-panel animate-slide-up"
-                    onMouseDown={(e) => e.stopPropagation()}
                     onClick={(e) => e.stopPropagation()}
                 >
-                    <button className="dropdown-item" onClick={() => { setShowViewProfile(true); setShowOptionsMenu(false); }}>
+                    <button 
+                        type="button"
+                        className="dropdown-item" 
+                        onPointerDown={(e) => e.stopPropagation()}
+                        onClick={(e) => { e.stopPropagation(); setShowViewProfile(true); setShowOptionsMenu(false); }}
+                    >
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
                         View Profile
                     </button>
-                    <button className={`dropdown-item ${isBlockedByMe ? "text-success" : "text-danger"}`} onClick={() => { handleBlockToggle(); setShowOptionsMenu(false); }}>
+                    <button 
+                        type="button"
+                        className={`dropdown-item ${isBlockedByMe ? "text-success" : "text-danger"}`} 
+                        onPointerDown={(e) => e.stopPropagation()}
+                        onClick={(e) => { e.stopPropagation(); handleBlockToggle(); setShowOptionsMenu(false); }}
+                    >
                         {isBlockedByMe ? (
                             <>
                                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2a10 10 0 1 0 10 10H12V2z"/><path d="M12 2a10 10 0 0 1 10 10h-2a8 8 0 0 0-8-8V2z"/></svg>
@@ -269,7 +277,12 @@ const ChatWindow = ({
                             </>
                         )}
                     </button>
-                    <button className="dropdown-item text-danger" onClick={() => { handleClearChat(); setShowOptionsMenu(false); }}>
+                    <button 
+                        type="button"
+                        className="dropdown-item text-danger" 
+                        onPointerDown={(e) => e.stopPropagation()}
+                        onClick={(e) => { e.stopPropagation(); handleClearChat(); setShowOptionsMenu(false); }}
+                    >
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>
                         Clear Chat
                     </button>

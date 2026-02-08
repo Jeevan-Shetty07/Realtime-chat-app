@@ -783,7 +783,9 @@
     transition: all 0.2s ease;
     text-align: left;
     width: 100%;
-    pointer-events: auto; /* Active area */
+    pointer-events: auto;
+    user-select: none; /* Prevent accidental text selection on tap */
+    -webkit-tap-highlight-color: transparent; /* Clean mobile feel */
 }
 
 .dropdown-item svg, 
