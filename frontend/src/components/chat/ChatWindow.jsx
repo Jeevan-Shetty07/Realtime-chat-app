@@ -249,6 +249,7 @@ const ChatWindow = ({
                 <div 
                     className="options-dropdown glass-panel animate-slide-up"
                     onClick={(e) => e.stopPropagation()}
+                    style={{ zIndex: 1002 }}
                 >
                     <button 
                         type="button"
