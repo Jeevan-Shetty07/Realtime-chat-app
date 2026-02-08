@@ -269,12 +269,8 @@ const ChatDashboard = () => {
       setMessages((prev) => [...prev, savedMessage]);
       console.log("✅ Message added to sender's state");
 
-      // Send real-time to other user (Socket.js updated to accept full object)
-      console.log("🔌 Emitting sendMessage event to socket");
-      socket.emit("sendMessage", {
-        chatId: activeChat._id,
-        message: savedMessage,
-      });
+      // Note: Real-time broadcast is now handled by the backend controller
+      // to ensure all participants receive it via their personal rooms.
 
       // Update chat list preview
       setMyChats((prev) => {

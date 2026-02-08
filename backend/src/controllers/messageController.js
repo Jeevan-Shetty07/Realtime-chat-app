@@ -118,6 +118,21 @@ export const sendMessage = async (req, res) => {
       .populate("senderId", "_id name email avatar")
       .lean();
 
+    // Real-time synchronization using Personal Rooms
+    const io = req.app.get("socketio");
+    if (io && chat.members) {
+      chat.members.forEach((member) => {
+        const memberId = member._id.toString();
+        // Skip sender if you want (frontend handles local state), 
+        // but sending to all ensures sidebars update everywhere
+        io.to(`user_${memberId}`).emit("receiveMessage", {
+          chatId,
+          message: populated,
+        });
+      });
+      console.log(`📡 Message ${populated._id} broadcasted to ${chat.members.length} personal rooms`);
+    }
+
     return res.status(201).json(populated);
   } catch (error) {
     console.error("🔥 SEND MESSAGE ERROR:", error);

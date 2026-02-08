@@ -47,6 +47,10 @@ export const setupSocket = (server) => {
         socket.userId = userId;
         onlineUsers.set(userId, socket.id);
 
+        // Join personal room for targeted notifications
+        socket.join(`user_${userId}`);
+        console.log(`📡 Socket ${socket.id} joined personal room: user_${userId}`);
+
         // Update user status in database
         await User.findByIdAndUpdate(userId, {
           isOnline: true,
