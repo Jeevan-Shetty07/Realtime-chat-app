@@ -57,14 +57,14 @@ export const SocketProvider = ({ children, user }) => {
     });
 
     socket.on("userBlocked", ({ blockedBy, blockedUser }) => {
-        if (user._id === blockedUser) {
+        if (String(user?._id) === String(blockedUser)) {
             console.log("🚫 You have been blocked by:", blockedBy);
             window.dispatchEvent(new CustomEvent('userBlockUpdate', { detail: { type: 'blocked_recipient', blockedBy } }));
         }
     });
 
     socket.on("userUnblocked", ({ unblockedBy, unblockedUser }) => {
-        if (user._id === unblockedUser) {
+        if (String(user?._id) === String(unblockedUser)) {
             console.log("✅ You have been unblocked by:", unblockedBy);
             window.dispatchEvent(new CustomEvent('userBlockUpdate', { detail: { type: 'unblocked_recipient', unblockedBy } }));
         }

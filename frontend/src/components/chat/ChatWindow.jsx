@@ -158,7 +158,8 @@ const ChatWindow = ({
     return typeof u === 'string' ? u : u._id?.toString() || u.toString();
   };
 
-  const isBlockedByMe = !!activeChat.isBlockedByMe;
+  const isBlockedByMe = !!activeChat.isBlockedByMe || 
+                        user?.blockedUsers?.some(bid => String(bid) === String(otherUser?._id));
   const isBlockingMe = !!activeChat.isBlockingMe;
   const isBlocked = isBlockedByMe || isBlockingMe;
 
