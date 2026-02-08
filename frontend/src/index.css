@@ -105,11 +105,11 @@ body::before {
   background: transparent;
 }
 ::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.1);
+  background: rgba(var(--text-primary-rgb, 255, 255, 255), 0.1);
   border-radius: 10px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(255, 255, 255, 0.3);
+  background: rgba(var(--text-primary-rgb, 255, 255, 255), 0.3);
 }
 
 /* Generic Glass Utilities */
@@ -123,11 +123,11 @@ body::before {
 }
 
 .glass-input {
-  background: rgba(0, 0, 0, 0.3);
+  background: var(--panel-bg);
   border: 1px solid var(--glass-border);
   border-radius: var(--radius-sm);
   padding: 12px 16px;
-  color: white;
+  color: var(--text-primary);
   width: 100%;
   outline: none;
   font-family: inherit;
@@ -144,7 +144,7 @@ body::before {
 .glass-btn {
   background: var(--glass-highlight);
   border: 1px solid var(--glass-border);
-  color: white;
+  color: var(--text-primary);
   padding: 10px 20px;
   border-radius: var(--radius-sm);
   cursor: pointer;

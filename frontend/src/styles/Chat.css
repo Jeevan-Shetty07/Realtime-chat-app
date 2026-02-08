@@ -195,10 +195,16 @@
 }
 
 .chat-item.active {
-  background: var(--glass-highlight);
-  border-color: var(--glass-border);
-  color: var(--text-primary);
+  background: var(--accent-gradient);
+  border-color: var(--accent-glow);
+  color: #fff;
   backdrop-filter: blur(10px);
+  box-shadow: 0 8px 20px var(--accent-glow);
+}
+
+.chat-item.active .chat-name,
+.chat-item.active .chat-last-msg {
+    color: #fff !important;
 }
 
 .user-avatar-sm {
@@ -603,7 +609,7 @@
   display: none;
   background: transparent;
   border: none;
-  color: white;
+  color: var(--text-primary);
   padding: 4px;
 }
 
