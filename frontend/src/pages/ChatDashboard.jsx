@@ -168,11 +168,37 @@ const ChatDashboard = () => {
         }
     });
 
+    // Handle Group Updates
+    socket.on("groupCreated", ({ userId: targetUserId, chat }) => {
+        if (String(user?._id) === String(targetUserId)) {
+            setMyChats(prev => [chat, ...prev]);
+        }
+    });
+
+    socket.on("groupRenamed", (updatedChat) => {
+        setMyChats(prev => prev.map(c => c._id === updatedChat._id ? { ...c, chatName: updatedChat.chatName } : c));
+        if (activeChatIdRef.current === updatedChat._id) {
+            setActiveChat(prev => ({ ...prev, chatName: updatedChat.chatName }));
+        }
+    });
+
+    socket.on("groupUpdated", (updatedChat) => {
+        // This covers adding/removing members
+        setMyChats(prev => prev.map(c => c._id === updatedChat._id ? updatedChat : c));
+        if (activeChatIdRef.current === updatedChat._id) {
+            setActiveChat(updatedChat);
+        }
+    });
+
     return () => {
+      window.removeEventListener('userBlockUpdate', handleBlockUpdate);
       socket.off("receiveMessage", handler);
       socket.off("messageUpdated");
+      socket.off("groupCreated");
+      socket.off("groupRenamed");
+      socket.off("groupUpdated");
     };
-  }, [socket]); // Remove activeChat dependency to avoid re-binding, use Ref instead
+  }, [socket, user]); // Added user to deps to handle identity-based events
 
   const startChatWithUser = async (userId) => {
     try {

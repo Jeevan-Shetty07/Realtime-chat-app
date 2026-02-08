@@ -230,6 +230,14 @@ export const createGroupChat = async (req, res) => {
       .populate("members", "_id name email avatar username about isAdmin blockedUsers")
       .populate("groupAdmins", "_id name email");
 
+    // Real-time synchronization
+    const io = req.app.get("socketio");
+    if (io) {
+      groupChat.members.forEach(memberId => {
+        io.emit("groupCreated", { userId: memberId, chat: fullGroupChat });
+      });
+    }
+
     return res.status(201).json(fullGroupChat);
   } catch (error) {
     console.error("🔥 CREATE GROUP ERROR:", error);
@@ -261,6 +269,12 @@ export const renameGroup = async (req, res) => {
       return res.status(404).json({ message: "Chat not found" });
     }
 
+    // Real-time synchronization
+    const io = req.app.get("socketio");
+    if (io) {
+      io.emit("groupRenamed", updatedChat);
+    }
+
     return res.json(updatedChat);
   } catch (error) {
     return res.status(500).json({ message: error.message });
@@ -285,6 +299,12 @@ export const addToGroup = async (req, res) => {
       return res.status(404).json({ message: "Chat not found" });
     }
 
+    // Real-time synchronization
+    const io = req.app.get("socketio");
+    if (io) {
+      io.emit("groupUpdated", added);
+    }
+
     return res.json(added);
   } catch (error) {
     return res.status(500).json({ message: error.message });
@@ -307,6 +327,12 @@ export const removeFromGroup = async (req, res) => {
 
     if (!removed) {
       return res.status(404).json({ message: "Chat not found" });
+    }
+
+    // Real-time synchronization
+    const io = req.app.get("socketio");
+    if (io) {
+      io.emit("groupUpdated", removed);
     }
 
     return res.json(removed);
