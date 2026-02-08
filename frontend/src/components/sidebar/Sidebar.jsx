@@ -56,7 +56,7 @@ const Sidebar = ({
       avatar: other?.name?.charAt(0).toUpperCase(),
       isGroup: false,
       online: other ? onlineUsers.includes(other._id) : false,
-      isBlocked: isBlocked(other?._id),
+      isBlocked: chat.isBlockedByMe || chat.isBlockingMe,
       isAdmin: other?.isAdmin
     };
   };

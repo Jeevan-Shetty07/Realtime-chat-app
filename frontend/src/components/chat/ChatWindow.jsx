@@ -226,6 +226,7 @@ const ChatWindow = ({
           <div className="user-text-info">
             <div className="user-name-row">
               <span className="user-name">{headerName}</span>
+              {isBlocked && <span className="blocked-tag">BLOCKED</span>}
               {!isGroup && otherUser?.isAdmin && <span className="admin-badge">ADMIN</span>}
             </div>
             <div className={`user-status ${headerStatus === "Online" ? "online" : ""}`}>
