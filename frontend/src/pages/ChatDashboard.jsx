@@ -264,25 +264,23 @@ const ChatDashboard = () => {
     <div className={`chat-container ${!showSidebar ? "sidebar-hidden" : ""}`}>
       <div className="chat-bg"></div>
       
-      {showSidebar && (
-        <Sidebar
-          user={user}
-          logout={logout}
-          onlineUsers={onlineUsers}
-          myChats={myChats}
-          activeChat={activeChat}
-          setActiveChat={(chat) => {
-            setActiveChat(chat);
-            if (window.innerWidth <= 768) setShowSidebar(false);
-          }}
-          users={users}
-          startChatWithUser={async (uid) => {
-            await startChatWithUser(uid);
-            if (window.innerWidth <= 768) setShowSidebar(false);
-          }}
-          onNewGroup={handleNewGroup}
-        />
-      )}
+      <Sidebar
+        user={user}
+        logout={logout}
+        onlineUsers={onlineUsers}
+        myChats={myChats}
+        activeChat={activeChat}
+        setActiveChat={(chat) => {
+          setActiveChat(chat);
+          if (window.innerWidth <= 768) setShowSidebar(false);
+        }}
+        users={users}
+        startChatWithUser={async (uid) => {
+          await startChatWithUser(uid);
+          if (window.innerWidth <= 768) setShowSidebar(false);
+        }}
+        onNewGroup={handleNewGroup}
+      />
 
       <ChatWindow
         user={user}

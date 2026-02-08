@@ -15,9 +15,9 @@
   width: 380px;
   display: flex;
   flex-direction: column;
-  background: var(--panel-bg);
   border-right: 1px solid var(--glass-border);
   backdrop-filter: blur(20px);
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), width 0.3s ease;
 }
 
 .sidebar-header {
@@ -628,6 +628,8 @@
     width: 100%;
     position: absolute;
     height: 100%;
+    z-index: 100; /* Ensure it's on top of ChatWindow on mobile */
+    box-shadow: 20px 0 50px rgba(0,0,0,0.5);
   }
 
   .chat-window {
