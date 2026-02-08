@@ -111,6 +111,24 @@ const ChatWindow = ({
     setText((prev) => prev + emojiData.emoji);
   };
 
+  const handleDownload = async (url, filename) => {
+    try {
+      const response = await fetch(url);
+      const blob = await response.blob();
+      const blobUrl = window.URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = blobUrl;
+      link.download = filename || "download";
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(blobUrl);
+    } catch (error) {
+      console.error("Download failed:", error);
+      window.open(url, "_blank");
+    }
+  };
+
   if (!activeChat) {
     return (
       <div className="chat-window">
@@ -344,20 +362,18 @@ const ChatWindow = ({
                             : (src.match(/\.(mp4|webm)$/i) ? 'video' : 'image');
 
                         return (
-                          <div key={i} style={{ marginBottom: "6px" }}>
+                          <div key={i} className="msg-attachment-container">
                               {type === 'video' ? (
                                   <video 
                                       src={getImageUrl(src)} 
                                       controls 
                                       className="msg-attachment"
-                                      style={{ width: "100%", maxWidth: "280px", height: "200px", objectFit: "cover", borderRadius: "12px" }}
                                   />
                               ) : type === 'image' ? (
                                   <img 
                                       src={getImageUrl(src)} 
                                       alt="attachment" 
                                       className="msg-attachment"
-                                      style={{ width: "100%", maxWidth: "280px", height: "200px", objectFit: "cover", borderRadius: "12px" }}
                                   />
                               ) : (
                                   <a 
@@ -365,14 +381,26 @@ const ChatWindow = ({
                                       target="_blank" 
                                       rel="noopener noreferrer" 
                                       className="file-attachment-link"
-                                      style={{ display: "flex", alignItems: "center", gap: "8px", padding: "10px", background: "rgba(255,255,255,0.1)", borderRadius: "8px", color: "white", textDecoration: "none" }}
                                   >
                                       <span>📂</span>
                                       <span>Download File</span>
                                   </a>
                               )}
+
+                              {(type === 'image' || type === 'video') && (
+                                  <button 
+                                      className="download-msg-btn"
+                                      onClick={(e) => {
+                                          e.stopPropagation();
+                                          handleDownload(getImageUrl(src), `chat-media-${i}`);
+                                      }}
+                                      title="Download Media"
+                                  >
+                                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                                  </button>
+                              )}
                           </div>
-                       );
+                        );
                     })
                 ) : null}
 
