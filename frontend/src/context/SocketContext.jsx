@@ -12,17 +12,33 @@ export const SocketProvider = ({ children, user }) => {
   });
 
   const socket = useMemo(() => {
-    return io(import.meta.env.VITE_API_URL || "http://localhost:5001", {
+    const newSocket = io(import.meta.env.VITE_API_URL || "http://localhost:5001", {
       transports: ["websocket"],
     });
+    
+    newSocket.on("connect", () => {
+      console.log("🔌 Socket connected:", newSocket.id);
+    });
+    
+    newSocket.on("disconnect", () => {
+      console.log("🔴 Socket disconnected");
+    });
+    
+    newSocket.on("error", (error) => {
+      console.error("🔥 Socket error:", error);
+    });
+    
+    return newSocket;
   }, []);
 
   useEffect(() => {
     if (!user?._id) return;
 
+    console.log("🔧 Setting up socket for user:", user._id);
     socket.emit("setup", user._id);
 
     socket.on("onlineUsers", (users) => {
+      console.log("👥 Online users updated:", users.length);
       setOnlineUsers(users);
     });
 

@@ -1,4 +1,4 @@
-# Realtime-chat-app
+c# Realtime-chat-app
 
 A realtime chat application (React + Node.js) with Socket.IO, Clerk auth, and MongoDB.
 

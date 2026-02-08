@@ -23,3 +23,23 @@ export const getMe = async () => {
   const res = await API.get(`/api/auth/me?t=${Date.now()}`);
   return res.data;
 };
+
+// Delete account
+export const deleteMeApi = async () => {
+  const res = await API.delete("/api/auth/me");
+  return res.data;
+};
+
+// User Blocking
+export const blockUserApi = async (userId) => {
+  return await API.post("/api/users/block", { userId });
+};
+
+export const unblockUserApi = async (userId) => {
+  return await API.post("/api/users/unblock", { userId });
+};
+
+export const getBlockedUsersApi = async () => {
+  const res = await API.get("/api/users/blocked");
+  return res.data;
+};

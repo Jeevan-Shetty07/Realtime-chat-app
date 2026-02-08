@@ -17,12 +17,19 @@ app.use((req, res, next) => {
 });
 
 // Middlewares
+const allowedOrigins = process.env.ALLOWED_ORIGINS 
+  ? process.env.ALLOWED_ORIGINS.split(",") 
+  : ["http://localhost:5173", "http://localhost:5174"];
+
 app.use(cors({
   origin: (origin, callback) => {
-    // Allow any localhost origin or no origin (like mobile/curl)
-    if (!origin || origin.startsWith("http://localhost:")) {
+    // Allow requests with no origin (like mobile apps or curl)
+    if (!origin) return callback(null, true);
+    
+    if (allowedOrigins.indexOf(origin) !== -1 || origin.startsWith("http://localhost:")) {
       callback(null, true);
     } else {
+      console.warn(`\u26a0\ufe0f Blocked by CORS: ${origin}`);
       callback(new Error("Not allowed by CORS"));
     }
   },

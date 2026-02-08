@@ -1,5 +1,8 @@
 import Chat from "../models/Chat.js";
 import Message from "../models/Message.js";
+import User from "../models/User.js";
+import fs from "fs";
+
 
 // @route   GET /api/messages/:chatId
 // @desc    Get messages for a chat with pagination
@@ -32,9 +35,26 @@ export const sendMessage = async (req, res) => {
   try {
     const { chatId, text, type, attachments } = req.body;
 
-    // Validation
     if (!chatId) {
       return res.status(400).json({ message: "Chat ID is required" });
+    }
+
+    const chat = await Chat.findById(chatId).populate("members", "_id blockedUsers");
+    if (!chat) {
+      return res.status(404).json({ message: "Chat not found" });
+    }
+
+    // Blocking Check (for 1-on-1 chats)
+    if (!chat.isGroupChat) {
+      const sender = chat.members.find(m => m._id.toString() === req.user._id.toString());
+      const recipient = chat.members.find(m => m._id.toString() !== req.user._id.toString());
+
+      if (sender?.blockedUsers?.some(bid => bid.toString() === recipient?._id?.toString())) {
+        return res.status(403).json({ message: "You have blocked this user" });
+      }
+      if (recipient?.blockedUsers?.some(bid => bid.toString() === sender?._id?.toString())) {
+        return res.status(403).json({ message: "You are blocked by this user" });
+      }
     }
 
     const textTrimmed = text ? text.trim() : "";
@@ -55,15 +75,32 @@ export const sendMessage = async (req, res) => {
       return res.status(400).json({ message: "Invalid message type" });
     }
 
-    // Create message
-    const msg = await Message.create({
+    // Create message - only include attachments if array is not empty
+    const messageData = {
       chatId,
       senderId: req.user._id,
       text: textTrimmed,
       type: messageType,
-      attachments: attachments || [],
       seenBy: [req.user._id],
-    });
+    };
+    
+    // Only add attachments if there are any
+    if (attachments && attachments.length > 0) {
+      messageData.attachments = attachments;
+    }
+    
+    console.log("📝 Attempting to create message with data:", JSON.stringify(messageData, null, 2));
+
+    let msg;
+    try {
+      msg = await Message.create(messageData);
+      console.log("✅ Message created successfully:", msg._id);
+    } catch (createError) {
+      console.error("🔥 Message.create failed:", createError);
+      fs.appendFileSync("backend_errors.log", `${new Date().toISOString()} - Message Create Error: ${createError.stack}\n`);
+      throw createError;
+    }
+
 
     // Update last message in chat
     let lastMsgText = textTrimmed;
@@ -158,5 +195,31 @@ export const addReaction = async (req, res) => {
   } catch (error) {
     console.error("🔥 ADD REACTION ERROR:", error);
     return res.status(500).json({ message: "Error adding reaction" });
+  }
+};
+
+// @route   DELETE /api/messages/:chatId/clear
+// @desc    Delete all messages in a chat
+export const clearChat = async (req, res) => {
+  try {
+    const { chatId } = req.params;
+
+    if (!chatId) {
+      return res.status(400).json({ message: "Chat ID is required" });
+    }
+
+    // Delete all messages
+    await Message.deleteMany({ chatId });
+
+    // Update last message in chat to reflect cleared state
+    await Chat.findByIdAndUpdate(chatId, {
+      lastMessage: "Chat cleared",
+      lastMessageAt: new Date(),
+    });
+
+    return res.status(200).json({ message: "Chat cleared successfully" });
+  } catch (error) {
+    console.error("🔥 CLEAR CHAT ERROR:", error);
+    return res.status(500).json({ message: "Error clearing chat" });
   }
 };

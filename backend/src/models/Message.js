@@ -79,11 +79,10 @@ messageSchema.index({ chatId: 1, createdAt: -1 });
 messageSchema.index({ senderId: 1, createdAt: -1 });
 
 // Validation: Message must have either text or attachments
-messageSchema.pre("save", function (next) {
+// Validation: Message must have either text or attachments
+messageSchema.pre("save", async function () {
   if (!this.text && (!this.attachments || this.attachments.length === 0)) {
-    next(new Error("Message must have either text or attachments"));
-  } else {
-    next();
+    throw new Error("Message must have either text or attachments");
   }
 });
 

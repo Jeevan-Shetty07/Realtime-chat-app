@@ -6,9 +6,19 @@ import Message from "../models/Message.js";
 const onlineUsers = new Map(); // userId -> socketId
 
 export const setupSocket = (server) => {
+  const allowedOrigins = process.env.ALLOWED_ORIGINS 
+    ? process.env.ALLOWED_ORIGINS.split(",") 
+    : ["http://localhost:5173", "http://localhost:5174"];
+
   const io = new Server(server, {
     cors: {
-      origin: "http://localhost:5173",
+      origin: (origin, callback) => {
+        if (!origin || allowedOrigins.indexOf(origin) !== -1 || origin.startsWith("http://localhost:")) {
+          callback(null, true);
+        } else {
+          callback(new Error("Not allowed by CORS"));
+        }
+      },
       credentials: true,
     },
     pingTimeout: 60000, // 60 seconds

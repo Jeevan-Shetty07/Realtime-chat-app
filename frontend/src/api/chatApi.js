@@ -23,3 +23,21 @@ export const createGroupChat = async (groupData) => {
   const res = await API.post("/api/chats/group", groupData);
   return res.data;
 };
+
+// Rename Group
+export const renameGroup = async (chatId, chatName) => {
+  const res = await API.put("/api/chats/group/rename", { chatId, chatName });
+  return res.data;
+};
+
+// Add to Group
+export const addToGroup = async (chatId, userId) => {
+  const res = await API.put("/api/chats/group/add", { chatId, userId });
+  return res.data;
+};
+
+// Remove from Group
+export const removeFromGroup = async (chatId, userId) => {
+  const res = await API.put("/api/chats/group/remove", { chatId, userId });
+  return res.data;
+};

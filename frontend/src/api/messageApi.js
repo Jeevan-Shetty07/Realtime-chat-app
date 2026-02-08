@@ -23,3 +23,8 @@ export const addReaction = async (messageId, emoji) => {
     const res = await API.put(`/api/messages/reaction/${messageId}`, { emoji });
     return res.data;
 };
+// Clear Chat
+export const clearMessagesApi = async (chatId) => {
+    const res = await API.delete(`/api/messages/${chatId}/clear`);
+    return res.data;
+};

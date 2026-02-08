@@ -13,6 +13,7 @@
     "@clerk/clerk-react": "^5.60.0",
     "@react-oauth/google": "^0.13.4",
     "axios": "^1.13.3",
+    "emoji-picker-react": "^4.18.0",
     "jwt-decode": "^4.0.0",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",

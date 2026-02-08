@@ -3,6 +3,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthContext, AuthProvider } from "./context/AuthContext";
 import { SocketProvider } from "./context/SocketContext";
 import ChatDashboard from "./pages/ChatDashboard";
+import AdminDashboard from "./pages/AdminDashboard";
 import Profile from "./pages/Profile";
 import { ClerkProvider, SignedIn, SignedOut, RedirectToSignIn, SignIn, SignUp } from "@clerk/clerk-react";
 
@@ -10,6 +11,8 @@ if (!import.meta.env.VITE_CLERK_PUBLISHABLE_KEY) {
   throw new Error("Missing Publishable Key");
 }
 const PUBLISHABLE_KEY = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY;
+
+import LoadingScreen from "./components/common/LoadingScreen";
 
 const AppRoutes = () => {
   const { user, loadingAuth } = useContext(AuthContext);
@@ -23,9 +26,7 @@ const AppRoutes = () => {
             <>
               <SignedIn>
                 {loadingAuth ? (
-                  <div className="flex-center" style={{ height: "100vh", color: "white" }}>
-                    <div className="loader">Loading your profile...</div>
-                  </div>
+                  <LoadingScreen />
                 ) : (
                   <ChatDashboard />
                 )}
@@ -45,6 +46,14 @@ const AppRoutes = () => {
           element={
             <SignedIn>
               <Profile />
+            </SignedIn>
+          }
+        />
+        <Route
+          path="/admin"
+          element={
+            <SignedIn>
+              <AdminDashboard />
             </SignedIn>
           }
         />

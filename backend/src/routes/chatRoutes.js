@@ -1,5 +1,5 @@
 import express from "express";
-import { clerkProtect } from "../middleware/clerkMiddleware.js";
+import { unifiedProtect } from "../middleware/clerkMiddleware.js";
 import {
   accessChat,
   getMyChats,
@@ -12,14 +12,14 @@ import {
 
 const router = express.Router();
 
-router.get("/", clerkProtect, getMyChats);
-router.post("/", clerkProtect, accessChat);
-router.get("/users", clerkProtect, getUsers);
+router.get("/", unifiedProtect, getMyChats);
+router.post("/", unifiedProtect, accessChat);
+router.get("/users", unifiedProtect, getUsers);
 
 // Group Chat Routes
-router.route("/group").post(clerkProtect, createGroupChat);
-router.route("/group/rename").put(clerkProtect, renameGroup);
-router.route("/group/add").put(clerkProtect, addToGroup);
-router.route("/group/remove").put(clerkProtect, removeFromGroup);
+router.route("/group").post(unifiedProtect, createGroupChat);
+router.route("/group/rename").put(unifiedProtect, renameGroup);
+router.route("/group/add").put(unifiedProtect, addToGroup);
+router.route("/group/remove").put(unifiedProtect, removeFromGroup);
 
 export default router;

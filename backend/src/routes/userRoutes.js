@@ -1,12 +1,12 @@
 import express from "express";
-import { clerkProtect } from "../middleware/clerkMiddleware.js";
+import { unifiedProtect } from "../middleware/clerkMiddleware.js";
 import User from "../models/User.js";
 
 const router = express.Router();
 
 // @route   GET /api/users/check-username
 // @desc    Check if username is available and get suggestions
-router.get("/check-username", clerkProtect, async (req, res) => {
+router.get("/check-username", unifiedProtect, async (req, res) => {
   try {
     const { username } = req.query;
     if (!username) return res.status(400).json({ message: "Username is required" });
@@ -36,7 +36,7 @@ router.get("/check-username", clerkProtect, async (req, res) => {
   }
 });
 
-router.put("/profile", clerkProtect, async (req, res) => {
+router.put("/profile", unifiedProtect, async (req, res) => {
   try {
     const { name, about, avatar, username } = req.body;
     console.log("👤 Updating profile for user ID:", req.user._id, "New username:", username);
@@ -77,6 +77,57 @@ router.put("/profile", clerkProtect, async (req, res) => {
   } catch (error) {
     console.error("🔥 UPDATE PROFILE ERROR:", error);
     res.status(500).json({ message: "Server error during profile update" });
+  }
+});
+
+// @route   POST /api/users/block
+// @desc    Block a user
+router.post("/block", unifiedProtect, async (req, res) => {
+  try {
+    const { userId } = req.body;
+    if (!userId) return res.status(400).json({ message: "userId is required" });
+
+    if (userId === req.user._id.toString()) {
+      return res.status(400).json({ message: "You cannot block yourself" });
+    }
+
+    const user = await User.findById(req.user._id);
+    if (!user.blockedUsers.includes(userId)) {
+      user.blockedUsers.push(userId);
+      await user.save();
+    }
+
+    res.status(200).json({ message: "User blocked successfully", blockedUsers: user.blockedUsers });
+  } catch (error) {
+    res.status(500).json({ message: "Error blocking user" });
+  }
+});
+
+// @route   POST /api/users/unblock
+// @desc    Unblock a user
+router.post("/unblock", unifiedProtect, async (req, res) => {
+  try {
+    const { userId } = req.body;
+    if (!userId) return res.status(400).json({ message: "userId is required" });
+
+    const user = await User.findById(req.user._id);
+    user.blockedUsers = user.blockedUsers.filter(id => id.toString() !== userId);
+    await user.save();
+
+    res.status(200).json({ message: "User unblocked successfully", blockedUsers: user.blockedUsers });
+  } catch (error) {
+    res.status(500).json({ message: "Error unblocking user" });
+  }
+});
+
+// @route   GET /api/users/blocked
+// @desc    Get blocked users list
+router.get("/blocked", unifiedProtect, async (req, res) => {
+  try {
+    const user = await User.findById(req.user._id).populate("blockedUsers", "_id name email avatar username");
+    res.status(200).json(user.blockedUsers);
+  } catch (error) {
+    res.status(500).json({ message: "Error fetching blocked users" });
   }
 });
 

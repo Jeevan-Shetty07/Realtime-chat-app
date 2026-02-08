@@ -1,10 +1,10 @@
 import express from "express";
 import upload from "../middleware/uploadMiddleware.js";
-import { clerkProtect } from "../middleware/clerkMiddleware.js";
+import { unifiedProtect } from "../middleware/clerkMiddleware.js";
 
 const router = express.Router();
 
-router.post("/", clerkProtect, upload.single("file"), (req, res) => {
+router.post("/", unifiedProtect, upload.single("file"), (req, res) => {
   try {
     if (!req.file) {
       return res.status(400).send({ message: "No file uploaded" });

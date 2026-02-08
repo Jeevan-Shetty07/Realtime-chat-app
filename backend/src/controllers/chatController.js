@@ -1,5 +1,6 @@
 import Chat from "../models/Chat.js";
 import User from "../models/User.js";
+import Message from "../models/Message.js";
 
 // @route   GET /api/chats/users
 // @desc    Get all users except logged in user (for search/start chat)
@@ -19,7 +20,7 @@ export const getUsers = async (req, res) => {
     }
 
     const users = await User.find(query)
-      .select("_id name email avatar isOnline lastSeen")
+      .select("_id name email avatar isOnline lastSeen isAdmin")
       .limit(50) // Limit results for performance
       .lean(); // Optimize query performance
 
@@ -35,6 +36,7 @@ export const getUsers = async (req, res) => {
 export const accessChat = async (req, res) => {
   try {
     const { userId } = req.body;
+    console.log("🔎 accessChat payload:", { userId, requester: req.user?._id });
 
     if (!userId) {
       return res.status(400).json({ message: "userId is required" });
@@ -44,30 +46,51 @@ export const accessChat = async (req, res) => {
       return res.status(400).json({ message: "You cannot chat with yourself" });
     }
 
+    // Double check: ensure members array is exactly the pair [requester, userId]
+    const sortedMembers = [req.user._id, userId].sort();
+
     // Find existing chat between two users
     let chat = await Chat.findOne({
       members: { $all: [req.user._id, userId] },
+      isGroupChat: false,
       $expr: { $eq: [{ $size: "$members" }, 2] },
-    }).populate("members", "_id name email avatar isOnline lastSeen");
+    }).populate("members", "_id name email avatar isOnline lastSeen username about isAdmin");
 
     if (chat) {
+      console.log("✅ accessChat: Found existing chat", chat._id);
       return res.status(200).json(chat);
     }
 
-    // Create new chat
-    const newChat = await Chat.create({
-      members: [req.user._id, userId],
-      lastMessage: "",
-      lastMessageAt: null,
-    });
+    // Create new chat - wrapping in a try-catch for potential race conditions if indexes aren't perfect
+    try {
+        console.log("🆕 accessChat: Creating new chat for pair", sortedMembers);
+        const newChat = await Chat.create({
+          members: [req.user._id, userId],
+          lastMessage: "",
+          lastMessageAt: null,
+          isGroupChat: false
+        });
 
-    chat = await Chat.findById(newChat._id).populate(
-      "members",
-      "_id name email avatar isOnline lastSeen"
-    );
+        chat = await Chat.findById(newChat._id).populate(
+          "members",
+          "_id name email avatar isOnline lastSeen username about isAdmin"
+        );
 
-    return res.status(201).json(chat);
+        return res.status(201).json(chat);
+    } catch (createError) {
+        // If creation failed (likely due to a concurrent request that created it first), try finding it one last time
+        console.warn("⚠️ accessChat: Creation conflict, searching again...");
+        chat = await Chat.findOne({
+            members: { $all: [req.user._id, userId] },
+            isGroupChat: false,
+            $expr: { $eq: [{ $size: "$members" }, 2] },
+        }).populate("members", "_id name email avatar isOnline lastSeen username about isAdmin");
+
+        if (chat) return res.status(200).json(chat);
+        throw createError;
+    }
   } catch (error) {
+    console.error("🔥 ACCESS CHAT ERROR:", error);
     return res.status(500).json({ message: error.message });
   }
 };
@@ -81,13 +104,29 @@ export const getMyChats = async (req, res) => {
     const chats = await Chat.find({
       members: { $in: [req.user._id] },
     })
-      .populate("members", "_id name email avatar isOnline lastSeen")
+      .populate("members", "_id name email avatar isOnline lastSeen username about isAdmin")
       .populate("groupAdmins", "_id name")
       .sort({ updatedAt: -1 })
       .limit(parseInt(limit))
       .skip((parseInt(page) - 1) * parseInt(limit));
 
-    return res.status(200).json(chats);
+    // Calculate unread counts for each chat
+    const chatsWithUnread = await Promise.all(
+        chats.map(async (chat) => {
+            const unreadCount = await Message.countDocuments({
+                chatId: chat._id,
+                senderId: { $ne: req.user._id }, // Don't count own messages
+                seenBy: { $ne: req.user._id }
+            });
+            
+            // Convert to plain object and add unreadCount
+            const chatObj = chat.toObject();
+            chatObj.unreadCount = unreadCount;
+            return chatObj;
+        })
+    );
+
+    return res.status(200).json(chatsWithUnread);
   } catch (error) {
     console.error("🔥 GET MY CHATS ERROR:", error);
     return res.status(500).json({ message: "Error fetching chats" });
@@ -148,7 +187,7 @@ export const createGroupChat = async (req, res) => {
     });
 
     const fullGroupChat = await Chat.findById(groupChat._id)
-      .populate("members", "_id name email avatar")
+      .populate("members", "_id name email avatar username about isAdmin")
       .populate("groupAdmins", "_id name email");
 
     return res.status(201).json(fullGroupChat);

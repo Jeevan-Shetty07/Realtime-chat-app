@@ -59,13 +59,12 @@ chatSchema.index({ updatedAt: -1 });
 chatSchema.index({ isGroupChat: 1 });
 
 // Validation: Group chats must have a name
-chatSchema.pre("save", function (next) {
-  if (this.isGroupChat && (!this.chatName || this.chatName.trim() === "")) {
-    next(new Error("Group chat must have a name"));
-  } else {
-    next();
+chatSchema.path('chatName').validate(function (value) {
+  if (this.isGroupChat) {
+    return typeof value === 'string' && value.trim().length > 0;
   }
-});
+  return true;
+}, 'Group chat must have a name');
 
 // Virtual for participant count
 chatSchema.virtual("participantCount").get(function () {

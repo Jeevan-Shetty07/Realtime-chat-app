@@ -58,6 +58,14 @@ const userSchema = new mongoose.Schema(
       type: Date, 
       default: null 
     },
+    isAdmin: {
+      type: Boolean,
+      default: false
+    },
+    blockedUsers: [{
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User"
+    }],
   },
   { 
     timestamps: true,
@@ -97,6 +105,7 @@ userSchema.virtual("profile").get(function () {
     about: this.about,
     isOnline: this.isOnline,
     lastSeen: this.lastSeen,
+    blockedUsers: this.blockedUsers,
     createdAt: this.createdAt
   };
 });

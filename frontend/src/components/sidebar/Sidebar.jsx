@@ -1,4 +1,6 @@
 import { useState } from "react";
+import { getAvatarUrl } from "../../utils/imageHelper";
+import { useTheme } from "../../context/ThemeContext";
 import "../../styles/Chat.css";
 import CreateGroupModal from "../modals/CreateGroupModal";
 import ProfileModal from "../modals/ProfileModal";
@@ -14,10 +16,22 @@ const Sidebar = ({
   startChatWithUser,
   onNewGroup,
 }) => {
+  const { theme, toggleTheme } = useTheme();
   const [search, setSearch] = useState("");
   const [activeTab, setActiveTab] = useState("chats"); // 'chats' or 'users'
   const [showGroupModal, setShowGroupModal] = useState(false);
   const [showProfileModal, setShowProfileModal] = useState(false);
+
+  const getUserId = (u) => {
+    if (!u) return null;
+    return typeof u === 'string' ? u : u._id?.toString() || u.toString();
+  };
+  const isBlocked = (targetId) => {
+    const tid = getUserId(targetId);
+    return user?.blockedUsers?.some(bid => getUserId(bid) === tid);
+  };
+
+  // ... (filteredUsers and getChatInfo remain same)
 
   const filteredUsers = users.filter((u) => {
     const q = search.toLowerCase();
@@ -41,7 +55,9 @@ const Sidebar = ({
       avatarLink: other?.avatar,
       avatar: other?.name?.charAt(0).toUpperCase(),
       isGroup: false,
-      online: other ? onlineUsers.includes(other._id) : false
+      online: other ? onlineUsers.includes(other._id) : false,
+      isBlocked: isBlocked(other?._id),
+      isAdmin: other?.isAdmin
     };
   };
 
@@ -49,37 +65,55 @@ const Sidebar = ({
     <div className="sidebar glass-panel">
       {/* Header */}
       <div className="sidebar-header">
-        <div className="user-profile-summary" onClick={() => setShowProfileModal(true)} style={{ cursor: "pointer" }}>
+        <div className="user-profile-summary" onClick={() => setShowProfileModal(true)}>
           <div className="user-avatar-sm">
             {user?.avatar ? (
-              <img src={`http://localhost:5001${user.avatar}`} alt="avatar" style={{ width: "100%", height: "100%", borderRadius: "50%", objectFit: "cover" }} />
+              <img src={getAvatarUrl(user.avatar)} alt="avatar" />
             ) : (
               user?.name?.charAt(0).toUpperCase()
             )}
           </div>
-          <div>
-            <div style={{ fontWeight: "700", color: "white" }}>{user?.name}</div>
-            <div style={{ fontSize: "12px", color: "var(--text-secondary)" }}>
+          <div className="user-info">
+            <div className="user-name-row">
+                <span className="user-name">{user?.name}</span>
+                {user?.isAdmin && <span className="admin-badge">ADMIN</span>}
+            </div>
+            <div className="user-status">
               My Profile
             </div>
           </div>
         </div>
-        <button onClick={logout} className="action-btn" title="Logout">
-          <svg
-            width="20"
-            height="20"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          >
-            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
-            <polyline points="16 17 21 12 16 7" />
-            <line x1="21" y1="12" x2="9" y2="12" />
-          </svg>
-        </button>
+        
+        <div className="header-actions">
+            <button onClick={toggleTheme} className="action-btn" title="Toggle Theme">
+              {theme === 'dark' ? (
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+              ) : (
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+              )}
+            </button>
+            {user?.isAdmin && (
+              <button onClick={() => window.location.href="/admin"} className="action-btn" title="Admin Panel">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><line x1="9" y1="3" x2="9" y2="21"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="9" y1="9" x2="15" y2="15"/><line x1="15" y1="9" x2="9" y2="15"/></svg>
+              </button>
+            )}
+            <button onClick={logout} className="action-btn" title="Logout">
+              <svg
+                width="20"
+                height="20"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+                <polyline points="16 17 21 12 16 7" />
+                <line x1="21" y1="12" x2="9" y2="12" />
+              </svg>
+            </button>
+        </div>
       </div>
 
       {/* Search */}
@@ -105,6 +139,7 @@ const Sidebar = ({
 
       {/* Tabs */}
       <div className="tabs-nav">
+        <div className={`tab-slider ${activeTab}`} />
         <button
           className={`tab-btn ${activeTab === "chats" ? "active" : ""}`}
           onClick={() => setActiveTab("chats")}
@@ -127,36 +162,67 @@ const Sidebar = ({
               No conversations yet
             </div>
           ) : (
-            myChats.map((chat) => {
-              const info = getChatInfo(chat);
-              const isActive = activeChat?._id === chat._id;
-              
-              return (
-                <div
-                  key={chat._id}
-                  className={`chat-item ${isActive ? "active" : ""}`}
-                  onClick={() => setActiveChat(chat)}
-                >
-                  <div className="user-avatar-sm" style={{ 
-                      background: info.isGroup ? "#ec4899" : (info.online ? "#22c55e" : "#6366f1") 
-                  }}>
-                    {info.isGroup ? "#" : (
-                      info.avatarLink ? (
-                        <img src={`http://localhost:5001${info.avatarLink}`} alt="avatar" style={{ width: "100%", height: "100%", borderRadius: "50%", objectFit: "cover" }} />
-                      ) : info.avatar
-                    )}
-                  </div>
-                  <div className="chat-info">
-                    <div className="chat-name-row">
-                        <span className="chat-name">{info.name}</span>
-                    </div>
-                    <div className="chat-last-msg">
-                        {chat.lastMessage || "Start a conversation"}
-                    </div>
-                  </div>
-                </div>
-              );
-            })
+            (() => {
+                // Deduplicate 1-on-1 chats: key by participant IDs array (sorted)
+                const seenPairs = new Set();
+                const deduplicated = myChats.filter(chat => {
+                    if (chat.isGroupChat) return true;
+                    // Sort members IDs to ensure [A,B] and [B,A] are treated same
+                    const pairKey = chat.members
+                        .map(m => m._id)
+                        .sort()
+                        .join("-");
+                    
+                    if (seenPairs.has(pairKey)) return false;
+                    seenPairs.add(pairKey);
+                    return true;
+                });
+
+                return deduplicated.map((chat) => {
+                    const info = getChatInfo(chat);
+                    const isActive = activeChat?._id === chat._id;
+                    
+                    return (
+                        <div
+                            key={chat._id}
+                            className={`chat-item ${isActive ? "active" : ""}`}
+                            onClick={() => {
+                                console.debug("Sidebar: click chat", chat._id);
+                                setActiveChat(chat);
+                            }}
+                        >
+                            <div className="user-avatar-sm" style={{ 
+                                background: info.isGroup ? "#ec4899" : (info.online ? "#22c55e" : "#6366f1") 
+                            }}>
+                                {info.isGroup ? "#" : (
+                                    info.avatarLink ? (
+                                        <img src={getAvatarUrl(info.avatarLink)} alt="avatar" style={{ width: "100%", height: "100%", borderRadius: "50%", objectFit: "cover" }} />
+                                    ) : info.avatar
+                                )}
+                            </div>
+                            <div className="chat-info">
+                                <div className="chat-name-row">
+                                    <div style={{ display: "flex", alignItems: "center" }}>
+                                        <span className="chat-name">{info.name}</span>
+                                        {info.isAdmin && <span className="admin-badge">ADMIN</span>}
+                                    </div>
+                                    {info.isBlocked && <span className="blocked-tag">Blocked</span>}
+                                </div>
+                                <div className="chat-last-msg-row" style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                                    <div className="chat-last-msg">
+                                        {chat.lastMessage || "Start a conversation"}
+                                    </div>
+                                    {chat.unreadCount > 0 && (
+                                        <div className="unread-badge">
+                                            {chat.unreadCount > 99 ? "99+" : chat.unreadCount}
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                        </div>
+                    );
+                });
+            })()
           )
         ) : (
           filteredUsers.length === 0 ? (
@@ -168,18 +234,27 @@ const Sidebar = ({
             <div
               key={u._id}
               className="chat-item"
-              onClick={() => startChatWithUser(u._id)}
+              onClick={() => {
+                console.debug("Sidebar: click user", u._id);
+                startChatWithUser(u._id);
+              }}
             >
              <div className="user-avatar-sm" style={{ background: "#ec4899" }}>
                 {u.avatar ? (
-                  <img src={`http://localhost:5001${u.avatar}`} alt="avatar" style={{ width: "100%", height: "100%", borderRadius: "50%", objectFit: "cover" }} />
+                  <img src={getAvatarUrl(u.avatar)} alt="avatar" style={{ width: "100%", height: "100%", borderRadius: "50%", objectFit: "cover" }} />
                 ) : (
                   u.name.charAt(0).toUpperCase()
                 )}
              </div>
               <div className="chat-info">
-                <div className="chat-name">{u.name}</div>
-                <div className="chat-last-msg">Available</div>
+                <div className="chat-name-row">
+                    <div style={{ display: "flex", alignItems: "center" }}>
+                        <div className="chat-name">{u.name}</div>
+                        {u.isAdmin && <span className="admin-badge">ADMIN</span>}
+                    </div>
+                    {isBlocked(u._id) && <span className="blocked-tag">Blocked</span>}
+                </div>
+                <div className="chat-last-msg">{isBlocked(u._id) ? "Blocked contact" : "Available"}</div>
               </div>
             </div>
           ))
