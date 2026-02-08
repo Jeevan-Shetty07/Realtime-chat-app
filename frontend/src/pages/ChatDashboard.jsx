@@ -97,6 +97,16 @@ const ChatDashboard = () => {
 
   // Receive messages real-time
   useEffect(() => {
+    const handleBlockUpdate = async () => {
+        try {
+            const chatsData = await fetchMyChats();
+            setMyChats(chatsData);
+        } catch (error) {
+            console.error("Failed to refresh chats on block update", error);
+        }
+    };
+    window.addEventListener('userBlockUpdate', handleBlockUpdate);
+    
     const handler = async ({ chatId, message }) => {
       console.log("📩 receiveMessage event:", { chatId, message, currentActive: activeChatIdRef.current });
       if (!message) return;

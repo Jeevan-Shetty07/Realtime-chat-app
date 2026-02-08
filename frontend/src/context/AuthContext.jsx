@@ -65,6 +65,14 @@ export const AuthProvider = ({ children }) => {
     }
   }, [clerkUser, isUserLoaded, isAuthLoaded]);
 
+  useEffect(() => {
+    const handleBlockUpdate = () => {
+        loadUser();
+    };
+    window.addEventListener('userBlockUpdate', handleBlockUpdate);
+    return () => window.removeEventListener('userBlockUpdate', handleBlockUpdate);
+  }, [loadUser]);
+
   const deleteAccount = async () => {
     try {
       await deleteMeApi();

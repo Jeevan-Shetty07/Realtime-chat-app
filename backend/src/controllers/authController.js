@@ -31,6 +31,7 @@ export const getMe = async (req, res) => {
         isOnline: req.user.isOnline,
         lastSeen: req.user.lastSeen,
         isAdmin: req.user.isAdmin,
+        blockedUsers: req.user.blockedUsers,
         createdAt: req.user.createdAt,
       },
     });

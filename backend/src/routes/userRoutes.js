@@ -95,6 +95,13 @@ router.post("/block", unifiedProtect, async (req, res) => {
     if (!user.blockedUsers.includes(userId)) {
       user.blockedUsers.push(userId);
       await user.save();
+      
+      // Real-time synchronization
+      const io = req.app.get("socketio");
+      if (io) {
+        console.log(`📡 Emitting userBlocked to ${userId} from ${req.user._id}`);
+        io.emit("userBlocked", { blockedBy: req.user._id, blockedUser: userId });
+      }
     }
 
     res.status(200).json({ message: "User blocked successfully", blockedUsers: user.blockedUsers });
@@ -113,6 +120,13 @@ router.post("/unblock", unifiedProtect, async (req, res) => {
     const user = await User.findById(req.user._id);
     user.blockedUsers = user.blockedUsers.filter(id => id.toString() !== userId);
     await user.save();
+
+    // Real-time synchronization
+    const io = req.app.get("socketio");
+    if (io) {
+      console.log(`📡 Emitting userUnblocked to ${userId} from ${req.user._id}`);
+      io.emit("userUnblocked", { unblockedBy: req.user._id, unblockedUser: userId });
+    }
 
     res.status(200).json({ message: "User unblocked successfully", blockedUsers: user.blockedUsers });
   } catch (error) {
