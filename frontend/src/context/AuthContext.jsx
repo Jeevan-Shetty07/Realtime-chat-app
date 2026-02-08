@@ -66,12 +66,19 @@ export const AuthProvider = ({ children }) => {
   }, [clerkUser, isUserLoaded, isAuthLoaded]);
 
   useEffect(() => {
-    const handleBlockUpdate = () => {
-        loadUser();
+    const handleBlockUpdate = ({ detail }) => {
+        // If I am the recipient, I need to reload my full profile to see who blocked me
+        // Actually, if someone blocks me, it doesn't change MY profile's blockedUsers list.
+        // It changes THEIR profile's blockedUsers list.
+        // BUT, I need to refresh my chats to see the updated member data.
+        if (detail?.type?.includes('recipient')) {
+            // No need to loadUser here, as my own profile didn't change.
+            // But we need to signal the dashboard to refresh chats.
+        }
     };
     window.addEventListener('userBlockUpdate', handleBlockUpdate);
     return () => window.removeEventListener('userBlockUpdate', handleBlockUpdate);
-  }, [loadUser]);
+  }, []);
 
   const deleteAccount = async () => {
     try {

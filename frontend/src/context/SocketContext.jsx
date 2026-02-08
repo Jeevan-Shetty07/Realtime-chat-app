@@ -57,19 +57,16 @@ export const SocketProvider = ({ children, user }) => {
     });
 
     socket.on("userBlocked", ({ blockedBy, blockedUser }) => {
-        // If I am the one who was blocked, I should probably refresh my view of the other user
-        // Or if I am the one who blocked (though that's handled locally usually)
         if (user._id === blockedUser) {
             console.log("🚫 You have been blocked by:", blockedBy);
-            // This event tells the recipient they are blocked
-            window.dispatchEvent(new CustomEvent('userBlockUpdate', { detail: { blockedBy, status: true } }));
+            window.dispatchEvent(new CustomEvent('userBlockUpdate', { detail: { type: 'blocked_recipient', blockedBy } }));
         }
     });
 
     socket.on("userUnblocked", ({ unblockedBy, unblockedUser }) => {
         if (user._id === unblockedUser) {
             console.log("✅ You have been unblocked by:", unblockedBy);
-            window.dispatchEvent(new CustomEvent('userBlockUpdate', { detail: { unblockedBy, status: false } }));
+            window.dispatchEvent(new CustomEvent('userBlockUpdate', { detail: { type: 'unblocked_recipient', unblockedBy } }));
         }
     });
 

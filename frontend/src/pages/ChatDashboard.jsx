@@ -99,10 +99,21 @@ const ChatDashboard = () => {
   useEffect(() => {
     const handleBlockUpdate = async () => {
         try {
-            const chatsData = await fetchMyChats();
+            const [chatsData, usersData] = await Promise.all([
+                fetchMyChats(),
+                fetchUsers()
+            ]);
             setMyChats(chatsData);
+            setUsers(usersData);
+            
+            // Critical: Sync activeChat to ensure it has the latest blockedUsers info
+            setActiveChat(prev => {
+                if (!prev) return null;
+                const updated = chatsData.find(c => c._id === prev._id);
+                return updated || prev;
+            });
         } catch (error) {
-            console.error("Failed to refresh chats on block update", error);
+            console.error("Failed to refresh dashboard on block update", error);
         }
     };
     window.addEventListener('userBlockUpdate', handleBlockUpdate);
