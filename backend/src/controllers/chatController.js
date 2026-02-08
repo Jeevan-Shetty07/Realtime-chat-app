@@ -54,7 +54,7 @@ export const accessChat = async (req, res) => {
       members: { $all: [req.user._id, userId] },
       isGroupChat: false,
       $expr: { $eq: [{ $size: "$members" }, 2] },
-    }).populate("members", "_id name email avatar isOnline lastSeen username about isAdmin");
+    }).populate("members", "_id name email avatar isOnline lastSeen username about isAdmin blockedUsers");
 
     if (chat) {
       console.log("✅ accessChat: Found existing chat", chat._id);
@@ -84,7 +84,7 @@ export const accessChat = async (req, res) => {
             members: { $all: [req.user._id, userId] },
             isGroupChat: false,
             $expr: { $eq: [{ $size: "$members" }, 2] },
-        }).populate("members", "_id name email avatar isOnline lastSeen username about isAdmin");
+        }).populate("members", "_id name email avatar isOnline lastSeen username about isAdmin blockedUsers");
 
         if (chat) return res.status(200).json(chat);
         throw createError;
@@ -104,7 +104,7 @@ export const getMyChats = async (req, res) => {
     const chats = await Chat.find({
       members: { $in: [req.user._id] },
     })
-      .populate("members", "_id name email avatar isOnline lastSeen username about isAdmin")
+      .populate("members", "_id name email avatar isOnline lastSeen username about isAdmin blockedUsers")
       .populate("groupAdmins", "_id name")
       .sort({ updatedAt: -1 })
       .limit(parseInt(limit))

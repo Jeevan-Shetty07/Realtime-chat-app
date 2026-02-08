@@ -87,6 +87,8 @@ export const AuthProvider = ({ children }) => {
     try {
       const { data } = await blockUserApi(userId);
       setUser(prev => ({ ...prev, blockedUsers: data.blockedUsers }));
+      // Trigger a refresh of chats to update member statuses
+      window.dispatchEvent(new CustomEvent('userBlockUpdate'));
     } catch (error) {
       console.error("Block user error:", error);
       throw error;
@@ -97,6 +99,7 @@ export const AuthProvider = ({ children }) => {
     try {
       const { data } = await unblockUserApi(userId);
       setUser(prev => ({ ...prev, blockedUsers: data.blockedUsers }));
+      window.dispatchEvent(new CustomEvent('userBlockUpdate'));
     } catch (error) {
       console.error("Unblock user error:", error);
       throw error;
