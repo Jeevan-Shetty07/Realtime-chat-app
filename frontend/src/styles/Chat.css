@@ -231,24 +231,9 @@
   font-size: 0.7rem;
 }
 
-.avatar-main {
-  width: 120px;
-  height: 120px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-weight: 700;
-  color: white;
-  border: 4px solid var(--glass-border);
-  box-shadow: 0 10px 25px rgba(0,0,0,0.3);
-  overflow: hidden;
-  margin: 0 auto;
-}
 
 .user-avatar-sm img,
-.user-avatar-xs img,
-.avatar-main img {
+.user-avatar-xs img {
   width: 100%;
   height: 100%;
   object-fit: cover;
@@ -978,6 +963,8 @@
     width: 140px;
     height: 140px;
     border-radius: 50%;
+    /* Use clip-path for robust circular clipping in all browsers */
+    clip-path: circle(50% at 50% 50%);
     overflow: hidden;
     position: relative;
     cursor: pointer;
@@ -988,13 +975,15 @@
     justify-content: center;
     transition: all 0.3s var(--ease-elastic);
     box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+    margin: 0 auto; /* Ensure centering */
 }
 
 .avatar-main img {
     width: 100%;
     height: 100%;
-    object-fit: cover; /* Critical fix for expansion */
+    object-fit: cover;
     display: block;
+    border-radius: 50%; /* Double safety */
 }
 
 .avatar-main:hover {
