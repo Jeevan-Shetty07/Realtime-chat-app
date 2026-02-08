@@ -46,15 +46,23 @@ const ChatWindow = ({
 
   useEffect(() => {
     const handleClickOutside = (event) => {
+      // For options menu
       if (menuRef.current && !menuRef.current.contains(event.target)) {
         setShowOptionsMenu(false);
       }
+      // For emoji picker
       if (emojiPickerRef.current && !emojiPickerRef.current.contains(event.target)) {
         setShowEmojiPicker(false);
       }
     };
+
     document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
+    document.addEventListener("touchstart", handleClickOutside); // Support mobile tap
+
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+      document.removeEventListener("touchstart", handleClickOutside);
+    };
   }, []);
 
   // Auto scroll
