@@ -8,6 +8,8 @@ import ConfirmModal from "../components/modals/ConfirmModal";
 const AdminDashboard = () => {
   const { user } = useContext(AuthContext);
   const [users, setUsers] = useState([]);
+  const [groups, setGroups] = useState([]);
+  const [activeTab, setActiveTab] = useState("users"); // "users" or "groups"
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [search, setSearch] = useState("");
@@ -20,8 +22,25 @@ const AdminDashboard = () => {
   });
 
   useEffect(() => {
-    fetchUsers();
-  }, []);
+    if (activeTab === "users") {
+      fetchUsers();
+    } else {
+      fetchGroups();
+    }
+  }, [activeTab]);
+
+  const fetchGroups = async () => {
+    try {
+      setLoading(true);
+      const { data } = await API.get("/api/auth/admin/groups");
+      setGroups(data);
+    } catch (err) {
+      setError("Failed to fetch groups");
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const fetchUsers = async () => {
     try {
@@ -68,6 +87,10 @@ const AdminDashboard = () => {
     (u.username && u.username.toLowerCase().includes(search.toLowerCase()))
   );
 
+  const filteredGroups = groups.filter(g => 
+    g.chatName.toLowerCase().includes(search.toLowerCase())
+  );
+
   if (!user?.isAdmin) {
     return (
       <div className="onboarding-screen">
@@ -89,7 +112,7 @@ const AdminDashboard = () => {
         <div className="admin-header">
           <div>
             <h1 className="auth-title" style={{ fontSize: "2rem", margin: 0 }}>System Administration</h1>
-            <p className="auth-subtitle">Manage users and roles</p>
+            <p className="auth-subtitle">Manage users, groups, and roles</p>
           </div>
           <button className="back-btn-premium" onClick={() => window.location.href="/"}>
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
@@ -97,24 +120,36 @@ const AdminDashboard = () => {
           </button>
         </div>
 
+        <div className="admin-tabs">
+          <button 
+            className={`admin-tab ${activeTab === "users" ? "active" : ""}`}
+            onClick={() => setActiveTab("users")}
+          >
+            Users ({users.length})
+          </button>
+          <button 
+            className={`admin-tab ${activeTab === "groups" ? "active" : ""}`}
+            onClick={() => setActiveTab("groups")}
+          >
+            Groups ({groups.length})
+          </button>
+        </div>
+
         <div className="admin-controls">
           <input 
             className="search-input" 
-            placeholder="Search users by name, email, or username..."
+            placeholder={activeTab === "users" ? "Search users by name..." : "Search groups by name..."}
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             style={{ maxWidth: "400px" }}
           />
-          <div className="admin-stats">
-            Total Users: <strong>{users.length}</strong>
-          </div>
         </div>
 
         {loading ? (
-          <div style={{ textAlign: "center", padding: "40px" }}>Loading users...</div>
+          <div style={{ textAlign: "center", padding: "40px" }}>Loading {activeTab}...</div>
         ) : error ? (
           <div className="error-message">{error}</div>
-        ) : (
+        ) : activeTab === "users" ? (
           <div className="admin-table-wrapper">
             <table className="admin-table">
               <thead>
@@ -176,6 +211,53 @@ const AdminDashboard = () => {
               </tbody>
             </table>
           </div>
+        ) : (
+          <div className="admin-table-wrapper">
+             <table className="admin-table">
+               <thead>
+                 <tr>
+                   <th>Group Name</th>
+                   <th>Members</th>
+                   <th>Admins</th>
+                   <th>Created</th>
+                 </tr>
+               </thead>
+               <tbody>
+                 {filteredGroups.map((g) => (
+                   <tr key={g._id}>
+                     <td>
+                        <div className="admin-user-cell">
+                          <div className="user-avatar-sm" style={{ background: "var(--accent-gradient)" }}>
+                            {g.groupImage ? (
+                                <img src={getAvatarUrl(g.groupImage)} alt="group" />
+                            ) : (
+                                g.chatName.charAt(0).toUpperCase()
+                            )}
+                          </div>
+                          <span>{g.chatName}</span>
+                        </div>
+                     </td>
+                     <td>
+                        <div style={{ fontSize: "14px", fontWeight: "600" }}>{g.members?.length || 0} Members</div>
+                        <div style={{ fontSize: "12px", opacity: 0.6, maxWidth: "200px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                            {g.members?.map(m => m.name).join(", ")}
+                        </div>
+                     </td>
+                     <td>
+                        <div style={{ display: "flex", flexWrap: "wrap", gap: "4px" }}>
+                            {g.groupAdmins?.map(admin => (
+                                <span key={admin._id} className="role-badge admin" style={{ fontSize: "10px", padding: "2px 8px" }}>
+                                    {admin.name}
+                                </span>
+                            ))}
+                        </div>
+                     </td>
+                     <td>{new Date(g.createdAt).toLocaleDateString()}</td>
+                   </tr>
+                 ))}
+               </tbody>
+             </table>
+          </div>
         )}
       </div>
 
@@ -200,6 +282,36 @@ const AdminDashboard = () => {
           display: flex;
           justify-content: space-between;
           align-items: center;
+        }
+        .admin-tabs {
+          display: flex;
+          gap: 20px;
+          border-bottom: 1px solid var(--glass-border);
+          padding-bottom: 10px;
+        }
+        .admin-tab {
+          background: transparent;
+          border: none;
+          color: var(--text-secondary);
+          padding: 8px 16px;
+          cursor: pointer;
+          font-weight: 600;
+          font-size: 1rem;
+          transition: 0.3s;
+          position: relative;
+        }
+        .admin-tab.active {
+          color: var(--accent-color);
+        }
+        .admin-tab.active::after {
+          content: '';
+          position: absolute;
+          bottom: -11px;
+          left: 0;
+          width: 100%;
+          height: 2px;
+          background: var(--accent-color);
+          box-shadow: 0 0 10px var(--accent-glow);
         }
         .admin-controls {
           display: flex;

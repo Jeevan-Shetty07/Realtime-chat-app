@@ -1,5 +1,5 @@
 import express from "express";
-import { getMe, register, login, deleteMe, getAllUsers, adminDeleteUser, toggleAdminStatus } from "../controllers/authController.js";
+import { getMe, register, login, deleteMe, getAllUsers, getAllGroups, adminDeleteUser, toggleAdminStatus } from "../controllers/authController.js";
 import { unifiedProtect, adminProtect } from "../middleware/clerkMiddleware.js";
 
 const router = express.Router();
@@ -11,6 +11,7 @@ router.delete("/me", unifiedProtect, deleteMe);
 
 // Admin Routes
 router.get("/admin/users", unifiedProtect, adminProtect, getAllUsers);
+router.get("/admin/groups", unifiedProtect, adminProtect, getAllGroups);
 router.delete("/admin/users/:id", unifiedProtect, adminProtect, adminDeleteUser);
 router.put("/admin/users/:id/role", unifiedProtect, adminProtect, toggleAdminStatus);
 

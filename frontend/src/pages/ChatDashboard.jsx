@@ -32,7 +32,11 @@ const ChatDashboard = () => {
   useEffect(() => {
     const handleResize = () => {
       if (window.innerWidth <= 768) {
-        setShowSidebar(false);
+        // Only hide sidebar on initial small screen load IF a chat is selected
+        // This prevents getting stuck on empty state with no menu
+        if (activeChatIdRef.current) {
+          setShowSidebar(false);
+        }
       } else {
         setShowSidebar(true);
       }

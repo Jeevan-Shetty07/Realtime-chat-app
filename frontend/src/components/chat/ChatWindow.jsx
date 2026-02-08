@@ -108,6 +108,11 @@ const ChatWindow = ({
     return (
       <div className="chat-window">
         <div className="empty-state">
+          {/* Mobile Menu Button for Empty State */}
+          <button className="mobile-toggle-btn empty-state-toggle" onClick={onToggleSidebar}>
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+          </button>
+          
           <div className="auth-bg-glow" style={{ position: "relative", width: "200px", height: "200px" }}></div>
           <h2 style={{ zIndex: 1, position: "relative" }}>Welcome to Chat App</h2>
           <p style={{ zIndex: 1, position: "relative" }}>Select a conversation to start messaging</p>

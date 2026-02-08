@@ -1,4 +1,6 @@
 import User from "../models/User.js";
+import Chat from "../models/Chat.js";
+import Message from "../models/Message.js";
 import jwt from "jsonwebtoken";
 
 const generateToken = (id) => {
@@ -140,15 +142,62 @@ export const getAllUsers = async (req, res) => {
   }
 };
 
+// @route   GET /api/auth/admin/groups
+// @desc    Get all groups (Admin only)
+export const getAllGroups = async (req, res) => {
+  try {
+    const groups = await Chat.find({ isGroupChat: true })
+      .populate("members", "_id name email avatar username")
+      .populate("groupAdmins", "_id name email")
+      .sort({ updatedAt: -1 });
+    res.json(groups);
+  } catch (error) {
+    console.error("🔥 GET ALL GROUPS ERROR:", error);
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
 // @route   DELETE /api/auth/admin/users/:id
 // @desc    Delete any user (Admin only)
 export const adminDeleteUser = async (req, res) => {
   try {
-    const user = await User.findById(req.params.id);
+    const userId = req.params.id;
+    const user = await User.findById(userId);
     if (!user) return res.status(404).json({ message: "User not found" });
     
-    await User.findByIdAndDelete(req.params.id);
-    res.json({ message: "User deleted successfully" });
+    // 1. Delete all messages sent by this user
+    await Message.deleteMany({ senderId: userId });
+
+    // 2. Handle 1-on-1 chats
+    // Find all 1-on-1 chats involving this user
+    const personalChats = await Chat.find({
+        isGroupChat: false,
+        members: { $in: [userId] }
+    });
+
+    for (const chat of personalChats) {
+        // Delete all messages in this 1-on-1 chat
+        await Message.deleteMany({ chatId: chat._id });
+        // Delete the chat itself
+        await Chat.findByIdAndDelete(chat._id);
+    }
+
+    // 3. Handle Group chats
+    // Remove the user from members and groupAdmins in all groups they belong to
+    await Chat.updateMany(
+        { isGroupChat: true, members: { $in: [userId] } },
+        { 
+            $pull: { 
+                members: userId,
+                groupAdmins: userId 
+            } 
+        }
+    );
+
+    // 4. Finally delete the user record
+    await User.findByIdAndDelete(userId);
+
+    res.json({ message: "User and all associated data deleted successfully" });
   } catch (error) {
     console.error("🔥 ADMIN DELETE ERROR:", error);
     res.status(500).json({ message: "Server error" });
