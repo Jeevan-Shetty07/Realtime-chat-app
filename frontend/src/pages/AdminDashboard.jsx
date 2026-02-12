@@ -93,7 +93,8 @@ const AdminDashboard = () => {
                 await deleteGroupChat(id);
                 setGroups(groups.filter(g => g._id !== id));
             } catch (err) {
-                alert("Failed to delete group");
+                console.error("Group deletion error:", err);
+                alert(`Failed to delete group: ${err.response?.data?.message || err.message}`);
             }
         }
     });

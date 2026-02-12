@@ -7,7 +7,6 @@ import {
   createGroupChat,
   renameGroup,
   addToGroup,
-  addToGroup,
   removeFromGroup,
   deleteGroup,
 } from "../controllers/chatController.js";
@@ -19,10 +18,10 @@ router.post("/", unifiedProtect, accessChat);
 router.get("/users", unifiedProtect, getUsers);
 
 // Group Chat Routes
-router.route("/group").post(unifiedProtect, createGroupChat);
-router.route("/group/rename").put(unifiedProtect, renameGroup);
-router.route("/group/add").put(unifiedProtect, addToGroup);
-router.route("/group/remove").put(unifiedProtect, removeFromGroup);
-router.route("/group/:chatId").delete(unifiedProtect, deleteGroup);
+router.post("/group", unifiedProtect, createGroupChat);
+router.put("/group/rename", unifiedProtect, renameGroup);
+router.put("/group/add", unifiedProtect, addToGroup);
+router.put("/group/remove", unifiedProtect, removeFromGroup);
+router.delete("/group/:chatId", unifiedProtect, deleteGroup);
 
 export default router;
