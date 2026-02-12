@@ -1,6 +1,7 @@
 import { useState } from "react";
 import ReactDOM from "react-dom";
 import "../../styles/Chat.css";
+import { getAvatarUrl } from "../../utils/imageHelper";
 import { createGroupChat } from "../../api/chatApi";
 import { useNotification } from "../../context/NotificationContext";
 
@@ -64,7 +65,7 @@ const CreateGroupModal = ({ onClose, users, onGroupCreated }) => {
               <div className="input-wrapper">
                   <input
                     className="chat-input"
-                    placeholder="Enter a names (e.g. Project Team)"
+                    placeholder="Enter a name (e.g. Project Team)"
                     value={groupName}
                     onChange={(e) => setGroupName(e.target.value)}
                     style={{ background: "transparent", width: "100%" }}
