@@ -128,8 +128,13 @@ const ChatDashboard = () => {
 
       // Only push message if we are currently in that chat
       if (isActive) {
-        console.log("✅ Adding message to state");
-        setMessages((prev) => [...prev, message]);
+        setMessages((prev) => {
+          const exists = prev.some(m => m._id === message._id);
+          if (exists) return prev;
+          
+          console.log("✅ Adding message to state");
+          return [...prev, message];
+        });
         await markChatSeen(chatId);
       }
 
