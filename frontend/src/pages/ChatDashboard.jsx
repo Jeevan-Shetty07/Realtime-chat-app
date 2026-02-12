@@ -4,7 +4,7 @@ import { accessChat, fetchMyChats, fetchUsers } from "../api/chatApi";
 import { fetchMessages, markChatSeen, sendMessageApi } from "../api/messageApi";
 import Sidebar from "../components/sidebar/Sidebar";
 import ChatWindow from "../components/chat/ChatWindow";
-import { useContext, useEffect, useState, useRef } from "react";
+import { useContext, useEffect, useState, useRef, useCallback } from "react";
 import ProfileModal from "../components/modals/ProfileModal";
 import { useNotification } from "../context/NotificationContext";
 import "../styles/Chat.css";
@@ -218,7 +218,7 @@ const ChatDashboard = () => {
     };
   }, [socket, user]); // Added user to deps to handle identity-based events
 
-  const startChatWithUser = async (userId) => {
+  const startChatWithUser = useCallback(async (userId) => {
     try {
       const chat = await accessChat(userId);
 
@@ -232,9 +232,9 @@ const ChatDashboard = () => {
     } catch (error) {
       console.log("start chat error:", error?.message);
     }
-  };
+  }, []); // socket not strictly needed here as it uses service
 
-  const handleTyping = () => {
+  const handleTyping = useCallback(() => {
     if (!activeChat?._id) return;
 
     socket.emit("typing", { chatId: activeChat._id, userName: user.name });
@@ -246,14 +246,14 @@ const ChatDashboard = () => {
     }, 900);
 
     setTypingTimeoutId(id);
-  };
+  }, [activeChat?._id, socket, user.name, typingTimeoutId]);
 
-  const handleNewGroup = (newGroupChat) => {
+  const handleNewGroup = useCallback((newGroupChat) => {
       setMyChats((prev) => [newGroupChat, ...prev]);
       setActiveChat(newGroupChat);
-  };
+  }, []);
 
-  const handleChatUpdate = (updatedChat, removed = false) => {
+  const handleChatUpdate = useCallback((updatedChat, removed = false) => {
     if (!updatedChat) return;
     
     if (removed) {
@@ -265,9 +265,9 @@ const ChatDashboard = () => {
             prev.map((c) => (c._id === updatedChat._id ? updatedChat : c))
         );
     }
-  };
+  }, []);
 
-  const sendMessage = async (content, type = "text", attachments = []) => {
+  const sendMessage = useCallback(async (content, type = "text", attachments = []) => {
     if (!activeChat?._id) return;
 
     try {
@@ -296,7 +296,7 @@ const ChatDashboard = () => {
           if (c._id === activeChat._id) {
             return {
               ...c,
-              lastMessage: type === 'image' ? '📷 Image' : content,
+              lastMessage: type === 'image' ? '📷 Image' : (type === 'file' ? '📎 Attachment' : content),
               lastMessageAt: savedMessage.createdAt,
               updatedAt: new Date().toISOString(),
             };
@@ -310,7 +310,7 @@ const ChatDashboard = () => {
     } catch (error) {
       console.log("send message error:", error?.message);
     }
-  };
+  }, [activeChat?._id, socket]);
 
   if (!user?.username) {
     return (

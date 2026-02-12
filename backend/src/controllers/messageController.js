@@ -20,7 +20,7 @@ export const getMessages = async (req, res) => {
       .sort({ createdAt: 1 })
       .limit(parseInt(limit))
       .skip((parseInt(page) - 1) * parseInt(limit))
-      .lean(); // Optimize performance
+      .lean();
 
     return res.status(200).json(messages);
   } catch (error) {
@@ -115,7 +115,7 @@ export const sendMessage = async (req, res) => {
 
     // Populate sender info
     const populated = await Message.findById(msg._id)
-      .populate("senderId", "_id name email avatar username")
+      .populate("senderId", "_id name avatar username")
       .lean();
 
     // Real-time synchronization using Personal Rooms

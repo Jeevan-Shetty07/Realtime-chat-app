@@ -63,7 +63,7 @@ export const accessChat = async (req, res) => {
       const me = chat.members.find(m => m._id.toString() === req.user._id.toString());
       const other = chat.members.find(m => m._id.toString() !== req.user._id.toString());
       
-      if (!chat.isGroupChat && other) {
+      if (other) {
           chatObj.isBlockedByMe = me?.blockedUsers?.some(bid => bid.toString() === other._id.toString());
           chatObj.isBlockingMe = other?.blockedUsers?.some(bid => bid.toString() === req.user._id.toString());
       }
@@ -71,7 +71,7 @@ export const accessChat = async (req, res) => {
       return res.status(200).json(chatObj);
     }
 
-    // Create new chat - wrapping in a try-catch for potential race conditions if indexes aren't perfect
+    // Create new chat
     try {
         console.log("🆕 accessChat: Creating new chat for pair", sortedMembers);
         const newChat = await Chat.create({
@@ -81,12 +81,11 @@ export const accessChat = async (req, res) => {
           isGroupChat: false
         });
 
-        chat = await Chat.findById(newChat._id).populate(
-          "members",
-          "_id name email avatar isOnline lastSeen username about isAdmin blockedUsers"
-        );
+        chat = await Chat.findById(newChat._id)
+          .populate("members", "_id name email avatar isOnline lastSeen username about isAdmin blockedUsers")
+          .lean();
 
-        const chatObj = chat.toObject();
+        const chatObj = chat; // Already a JS object because of .lean()
         const me = chat.members.find(m => m._id.toString() === req.user._id.toString());
         const other = chat.members.find(m => m._id.toString() !== req.user._id.toString());
         
@@ -133,11 +132,12 @@ export const getMyChats = async (req, res) => {
     const chats = await Chat.find({
       members: { $in: [req.user._id] },
     })
-      .populate("members", "_id name email avatar isOnline lastSeen username about isAdmin blockedUsers")
+      .populate("members", "_id name avatar username isOnline lastSeen blockedUsers")
       .populate("groupAdmins", "_id name")
       .sort({ updatedAt: -1 })
       .limit(parseInt(limit))
-      .skip((parseInt(page) - 1) * parseInt(limit));
+      .skip((parseInt(page) - 1) * parseInt(limit))
+      .lean();
 
     // Calculate unread counts for each chat
     const chatsWithUnread = await Promise.all(
@@ -149,7 +149,7 @@ export const getMyChats = async (req, res) => {
             });
             
             // Convert to plain object and add unreadCount + block status
-            const chatObj = chat.toObject();
+            const chatObj = chat; // Already lean
             chatObj.unreadCount = unreadCount;
             
             if (!chat.isGroupChat) {
@@ -373,9 +373,11 @@ export const deleteGroup = async (req, res) => {
     }
 
     // Check if requester is admin
-    const isAdmin = chat.groupAdmins.some(a => a.toString() === req.user._id.toString());
-    if (!isAdmin) {
-        return res.status(403).json({ message: "Only group admins can delete the group" });
+    const isAdminOfGroup = chat.groupAdmins.some(a => a.toString() === req.user._id.toString());
+    const isWebsiteAdmin = req.user.isAdmin === true;
+
+    if (!isAdminOfGroup && !isWebsiteAdmin) {
+        return res.status(403).json({ message: "Only group admins or website admins can delete the group" });
     }
 
     const members = chat.members; // for socket notification

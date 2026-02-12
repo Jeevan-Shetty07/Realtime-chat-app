@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useContext } from "react";
+import { useState, useEffect, useRef, useContext, memo, useCallback } from "react";
 import { AuthContext } from "../../context/AuthContext";
 import { getImageUrl, getAvatarUrl } from "../../utils/imageHelper";
 import { uploadFile } from "../../api/uploadApi";
@@ -11,7 +11,7 @@ import EmojiPicker from 'emoji-picker-react';
 import { useTheme } from "../../context/ThemeContext";
 import { useNotification } from "../../context/NotificationContext";
 
-const ChatWindow = ({
+const ChatWindow = memo(({
   user,
   activeChat,
   messages,
@@ -71,47 +71,45 @@ const ChatWindow = ({
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, typingState]);
 
-  const onSend = (e) => {
-    e.preventDefault();
+  const onSend = useCallback((e) => {
+    if (e) e.preventDefault();
     if (!text.trim()) return;
     sendMessage(text);
     setText("");
-  };
+  }, [text, sendMessage]);
 
-  const onKeyDown = (e) => {
+  const onKeyDown = useCallback((e) => {
     if (e.key === "Enter" && !e.shiftKey) {
         e.preventDefault();
         onSend(e);
     }
     handleTyping(e);
-  };
+  }, [onSend, handleTyping]);
 
-  const handleFileClick = () => {
+  const handleFileClick = useCallback(() => {
     fileInputRef.current?.click();
-  };
+  }, []);
 
-  const handleFileChange = async (e) => {
+  const handleFileChange = useCallback(async (e) => {
     const file = e.target.files[0];
     if (!file) return;
 
     try {
         setUploading(true);
         const { url, fileType } = await uploadFile(file);
-        // Send immediately - use dynamic type from backend or fallback to 'file'
         await sendMessage("", fileType || "file", [{ url, fileType: fileType || "file" }]);
     } catch (error) {
         console.error("Upload failed", error);
         addNotification("Image upload failed", "error");
     } finally {
         setUploading(false);
-        // Reset input
         if (fileInputRef.current) fileInputRef.current.value = "";
     }
-  };
+  }, [sendMessage, addNotification]);
 
-  const onEmojiClick = (emojiData) => {
+  const onEmojiClick = useCallback((emojiData) => {
     setText((prev) => prev + emojiData.emoji);
-  };
+  }, []);
 
   const handleCopyMessage = (text) => {
     if (!text) return;
@@ -560,6 +558,6 @@ const ChatWindow = ({
       />
     </div>
   );
-};
+});
 
 export default ChatWindow;

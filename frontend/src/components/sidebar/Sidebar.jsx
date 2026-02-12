@@ -1,11 +1,11 @@
-import { useState } from "react";
+import { useState, memo } from "react";
 import { getAvatarUrl } from "../../utils/imageHelper";
 import { useTheme } from "../../context/ThemeContext";
 import "../../styles/Chat.css";
 import CreateGroupModal from "../modals/CreateGroupModal";
 import ProfileModal from "../modals/ProfileModal";
 
-const Sidebar = ({
+const Sidebar = memo(({
   user,
   logout,
   onlineUsers,
@@ -278,6 +278,6 @@ const Sidebar = ({
       )}
     </div>
   );
-};
+});
 
 export default Sidebar;
