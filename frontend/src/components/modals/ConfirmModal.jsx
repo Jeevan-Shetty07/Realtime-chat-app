@@ -27,19 +27,20 @@ const ConfirmModal = ({
                     )}
                 </div>
                 
-                <h3 className="confirm-title">{title}</h3>
-                <p className="confirm-message">{message}</p>
+                <h3 className="confirm-title" style={{ fontSize: "1.4rem", fontWeight: "800", marginBottom: "12px", color: "var(--text-primary)" }}>{title}</h3>
+                <p className="confirm-message" style={{ color: "var(--text-muted)", marginBottom: "32px", fontSize: "0.95rem", lineHeight: "1.5" }}>{message}</p>
                 
-                <div className="confirm-actions">
-                    <button className="confirm-cancel-btn" onClick={onClose}>
+                <div className="confirm-actions" style={{ display: "flex", gap: "12px", justifyContent: "flex-end" }}>
+                    <button className="btn btn-secondary" onClick={onClose} style={{ flex: 1 }}>
                         {cancelText}
                     </button>
                     <button 
-                        className={`confirm-submit-btn ${type === 'danger' ? 'danger-bg' : 'primary-bg'}`} 
+                        className={`btn ${type === 'danger' ? 'btn-danger' : 'btn-primary'}`} 
                         onClick={() => {
                             onConfirm();
                             onClose();
                         }}
+                        style={{ flex: 1 }}
                     >
                         {confirmText}
                     </button>

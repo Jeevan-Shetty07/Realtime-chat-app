@@ -16,7 +16,7 @@ export const getMessages = async (req, res) => {
     }
 
     const messages = await Message.find({ chatId })
-      .populate("senderId", "_id name email avatar")
+      .populate("senderId", "_id name email avatar username")
       .sort({ createdAt: 1 })
       .limit(parseInt(limit))
       .skip((parseInt(page) - 1) * parseInt(limit))
@@ -115,7 +115,7 @@ export const sendMessage = async (req, res) => {
 
     // Populate sender info
     const populated = await Message.findById(msg._id)
-      .populate("senderId", "_id name email avatar")
+      .populate("senderId", "_id name email avatar username")
       .lean();
 
     // Real-time synchronization using Personal Rooms
@@ -236,5 +236,42 @@ export const clearChat = async (req, res) => {
   } catch (error) {
     console.error("🔥 CLEAR CHAT ERROR:", error);
     return res.status(500).json({ message: "Error clearing chat" });
+  }
+};
+// @route   DELETE /api/messages/:messageId
+// @desc    Delete a message
+export const deleteMessage = async (req, res) => {
+  try {
+    const { messageId } = req.params;
+
+    const message = await Message.findById(messageId);
+    if (!message) {
+      return res.status(404).json({ message: "Message not found" });
+    }
+
+    // Security: Only sender can delete their own message
+    if (message.senderId.toString() !== req.user._id.toString()) {
+      return res.status(403).json({ message: "You can only delete your own messages" });
+    }
+
+    await message.deleteOne();
+
+    // Notify others via socket
+    const io = req.app.get("socketio");
+    if (io) {
+        // Emit to the chat room
+        io.to(`chat_${message.chatId}`).emit("messageDeleted", {
+            chatId: message.chatId,
+            messageId: message._id
+        });
+        
+        // Also emit to all participants in case they aren't in the "room" but need to update sidebar
+        // (Existing pattern uses user_ personal rooms for broad notifications)
+    }
+
+    return res.status(200).json({ message: "Message deleted" });
+  } catch (error) {
+    console.error("🔥 DELETE MESSAGE ERROR:", error);
+    return res.status(500).json({ message: "Error deleting message" });
   }
 };

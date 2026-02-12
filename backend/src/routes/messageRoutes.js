@@ -6,6 +6,7 @@ import {
   sendMessage,
   addReaction,
   clearChat,
+  deleteMessage,
 } from "../controllers/messageController.js";
 
 const router = express.Router();
@@ -15,5 +16,6 @@ router.post("/", unifiedProtect, sendMessage);
 router.put("/seen/:chatId", unifiedProtect, markAsSeen);
 router.put("/reaction/:messageId", unifiedProtect, addReaction);
 router.delete("/:chatId/clear", unifiedProtect, clearChat);
+router.delete("/:messageId", unifiedProtect, deleteMessage);
 
 export default router;

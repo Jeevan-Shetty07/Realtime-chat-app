@@ -28,3 +28,8 @@ export const clearMessagesApi = async (chatId) => {
     const res = await API.delete(`/api/messages/${chatId}/clear`);
     return res.data;
 };
+// Delete Message
+export const deleteMessageApi = async (messageId) => {
+    const res = await API.delete(`/api/messages/${messageId}`);
+    return res.data;
+};

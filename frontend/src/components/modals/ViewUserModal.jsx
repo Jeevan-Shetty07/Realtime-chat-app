@@ -7,55 +7,58 @@ const ViewUserModal = ({ user, onClose }) => {
 
   return ReactDOM.createPortal(
     <div className="modal-overlay" onClick={onClose}>
-      <div className="modal-content" onClick={(e) => e.stopPropagation()} style={{ textAlign: "center" }}>
-        <div className="modal-header" style={{ justifyContent: "flex-end", marginBottom: "0" }}>
+      <div className="modal-content animate-slide-up" onClick={(e) => e.stopPropagation()} style={{ textAlign: "center", maxWidth: "460px" }}>
+        <div className="modal-header" style={{ justifyContent: "flex-end", marginBottom: "0", border: "none" }}>
           <button className="close-btn" onClick={onClose}>✕</button>
         </div>
 
-        <div className="avatar-edit-container" style={{ marginBottom: "20px" }}>
-            <div className="avatar-main" style={{ cursor: "default", borderColor: "var(--accent-color)" }}>
+        <div className="avatar-edit-container" style={{ marginBottom: "28px" }}>
+            <div className="avatar-main" style={{ cursor: "default", width: "120px", height: "120px", margin: "0 auto", padding: "4px", background: "var(--accent-gradient)", boxShadow: "0 10px 30px var(--accent-glow)" }}>
               {user.avatar ? (
-                <img src={getAvatarUrl(user.avatar)} alt="avatar" />
+                <img src={getAvatarUrl(user.avatar)} alt="avatar" style={{ border: "4px solid var(--chat-bg)" }} />
               ) : (
-                <div className="avatar-placeholder">
+                <div className="avatar-placeholder" style={{ fontSize: "2.5rem", fontWeight: "800" }}>
                     {(user.name || "?").charAt(0).toUpperCase()}
                 </div>
               )}
             </div>
         </div>
 
-        <h2 style={{ fontSize: "1.8rem", fontWeight: "700", marginBottom: "4px", display: "flex", alignItems: "center", justifyContent: "center" }}>
+        <h2 style={{ fontSize: "2rem", fontWeight: "900", marginBottom: "6px", display: "flex", alignItems: "center", justifyContent: "center", gap: "10px", color: "var(--text-primary)" }}>
             {user.name}
-            {user.isAdmin && <span className="admin-badge">ADMIN</span>}
+            {user.isAdmin && <span className="admin-badge" style={{ verticalAlign: "middle" }}>ADMIN</span>}
         </h2>
         
-        <p style={{ color: "var(--text-secondary)", marginBottom: "24px", fontSize: "1rem" }}>
-            @{user.username || "username"}
+        <p style={{ color: "var(--accent-color)", marginBottom: "32px", fontSize: "1.1rem", fontWeight: "600" }}>
+            @{user.username || user.name.toLowerCase().replace(/\s+/g, '_')}
         </p>
 
         <div style={{ 
             background: "rgba(0,0,0,0.2)", 
-            padding: "20px", 
-            borderRadius: "20px",
+            padding: "24px", 
+            borderRadius: "24px",
             textAlign: "left",
-            border: "1px solid var(--glass-border)"
+            border: "1px solid var(--glass-border)",
+            marginBottom: "10px"
         }}>
             <h4 style={{ 
-                fontSize: "0.85rem", 
+                fontSize: "0.8rem", 
                 textTransform: "uppercase", 
-                letterSpacing: "1px", 
-                color: "var(--text-secondary)",
-                marginBottom: "8px"
+                letterSpacing: "2px", 
+                color: "var(--text-muted)",
+                marginBottom: "12px",
+                fontWeight: "800"
             }}>
                 About
             </h4>
             <p style={{ 
                 color: "var(--text-primary)", 
-                lineHeight: "1.6",
-                fontSize: "1rem",
-                whiteSpace: "pre-wrap"
+                lineHeight: "1.7",
+                fontSize: "1.05rem",
+                whiteSpace: "pre-wrap",
+                fontWeight: "400"
             }}>
-                {user.about || "No bio available."}
+                {user.about || "This user prefers to keep their bio a mystery."}
             </p>
         </div>
       </div>

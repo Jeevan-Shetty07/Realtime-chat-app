@@ -52,83 +52,100 @@ const CreateGroupModal = ({ onClose, users, onGroupCreated }) => {
 
   return ReactDOM.createPortal(
     <div className="modal-overlay" onClick={onClose}>
-      <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+      <div className="modal-content animate-slide-up" onClick={(e) => e.stopPropagation()} style={{ maxWidth: "520px" }}>
         <div className="modal-header">
           <div className="modal-title">Create Group Chat</div>
-          <button className="close-btn" onClick={onClose}>
-            ✕
-          </button>
+          <button className="close-btn" onClick={onClose}>✕</button>
         </div>
 
         <div className="profile-edit-body">
-            <div className="form-group">
+            <div className="form-group" style={{ marginBottom: "24px" }}>
               <label className="input-label">Group Name</label>
-              <input
-                className="search-input"
-                placeholder="e.g. Project Team"
-                value={groupName}
-                onChange={(e) => setGroupName(e.target.value)}
-              />
+              <div className="input-wrapper">
+                  <input
+                    className="chat-input"
+                    placeholder="Enter a names (e.g. Project Team)"
+                    value={groupName}
+                    onChange={(e) => setGroupName(e.target.value)}
+                    style={{ background: "transparent", width: "100%" }}
+                  />
+              </div>
             </div>
 
             <div className="form-group">
-              <label className="input-label">Select Members ({selectedUsers.length} selected)</label>
+              <label className="input-label">
+                  Members <span style={{ color: "var(--accent-color)", marginLeft: "4px" }}>({selectedUsers.length} selected)</span>
+              </label>
               
-              <div className="chip-container" style={{ minHeight: selectedUsers.length > 0 ? "auto" : "0", margin: selectedUsers.length > 0 ? "10px 0" : "0" }}>
+              <div className="chip-container">
                 {selectedUsers.map((u) => (
                     <div key={u._id} className="user-chip">
-                        {u.name}
+                        <span>{u.name}</span>
                         <span className="chip-remove" onClick={() => handleSelectUser(u)}>✕</span>
                     </div>
                 ))}
               </div>
 
-              <input
-                className="search-input"
-                placeholder="Search users to add..."
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                style={{ marginBottom: "12px" }}
-              />
+              <div className="input-wrapper" style={{ marginBottom: "16px", borderRadius: "14px" }}>
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ opacity: 0.5 }}><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                  <input
+                    className="chat-input"
+                    placeholder="Search users to add..."
+                    value={search}
+                    onChange={(e) => setSearch(e.target.value)}
+                    style={{ background: "transparent", width: "100%", padding: "4px 8px" }}
+                  />
+              </div>
 
-              <div className="user-selection-list" style={{ maxHeight: "250px", overflowY: "auto", background: "rgba(255,255,255,0.02)", borderRadius: "12px", border: "1px solid rgba(255,255,255,0.05)" }}>
+              <div className="user-selection-list">
                 {filteredUsers.length > 0 ? filteredUsers.map((u) => {
                      const isSelected = selectedUsers.some((sel) => sel._id === u._id);
+                     const displayUsername = u.username || u.name.toLowerCase().replace(/\s+/g, '_');
                      return (
                         <div 
                             key={u._id} 
                             className={`user-select-item ${isSelected ? "selected" : ""}`}
                             onClick={() => handleSelectUser(u)}
-                            style={{ padding: "10px 15px", transition: "background 0.2s" }}
                         >
                             <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-                                <div className="user-avatar-sm" style={{ width: "36px", height: "36px", fontSize: "0.9rem" }}>
-                                    {u.avatar ? <img src={u.avatar.startsWith('http') ? u.avatar : `${import.meta.env.VITE_API_BASE_URL}${u.avatar}`} alt="avatar" style={{width: '100%', height: '100%', borderRadius: '50%'}} /> : u.name.charAt(0).toUpperCase()}
+                                <div className="user-avatar-sm" style={{ width: "40px", height: "40px", fontSize: "1rem", background: isSelected ? "var(--accent-color)" : "rgba(255,255,255,0.1)" }}>
+                                    {u.avatar ? <img src={getAvatarUrl(u.avatar)} alt="avatar" /> : u.name.charAt(0).toUpperCase()}
                                 </div>
                                 <div style={{ display: "flex", flexDirection: "column" }}>
-                                    <span style={{ color: "white", fontSize: "0.95rem", fontWeight: "500" }}>{u.name}</span>
-                                    <span style={{ color: "rgba(255,255,255,0.5)", fontSize: "0.75rem" }}>@{u.username || "user"}</span>
+                                    <span style={{ color: "var(--text-primary)", fontSize: "0.95rem", fontWeight: "600" }}>{u.name}</span>
+                                    <span style={{ color: "var(--text-muted)", fontSize: "0.8rem" }}>@{displayUsername}</span>
                                 </div>
                             </div>
-                            {isSelected && <div className="selected-indicator">✓</div>}
+                            {isSelected && (
+                                <div className="selected-indicator">
+                                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                                </div>
+                            )}
                         </div>
                      );
                 }) : (
-                    <p style={{ textAlign: "center", color: "rgba(255,255,255,0.4)", padding: "20px" }}>No users found</p>
+                    <div style={{ textAlign: "center", color: "var(--text-muted)", padding: "40px 20px" }}>
+                        <div style={{ fontSize: "2rem", marginBottom: "10px" }}>🔍</div>
+                        <p>No users found matching your search</p>
+                    </div>
                 )}
               </div>
             </div>
         </div>
 
-        <div className="modal-footer" style={{ marginTop: "20px", display: "flex", justifyContent: "flex-end", gap: "12px" }}>
-            <button className="btn btn-secondary" onClick={onClose} style={{ padding: "10px 20px" }}>Cancel</button>
+        <div className="modal-footer">
+            <button className="btn btn-secondary" onClick={onClose}>Cancel</button>
             <button 
                 className={`btn btn-primary ${loading ? "btn-loading" : ""}`} 
                 onClick={handleCreate}
-                disabled={!groupName || selectedUsers.length < 2 || loading}
-                style={{ padding: "10px 25px" }}
+                disabled={!groupName.trim() || selectedUsers.length < 2 || loading}
             >
-                {loading ? "Creating..." : "Create Group"}
+                {loading ? (
+                    <>
+                        <div className="spinner-xs"></div>
+                        <span>Creating...</span>
+                    </>
+                ) : "Create Group"}
             </button>
         </div>
 

@@ -6,7 +6,7 @@ import { formatTime } from "../../utils/formatTime";
 import ViewUserModal from "../../components/modals/ViewUserModal";
 import GroupInfoModal from "../../components/modals/GroupInfoModal";
 import ConfirmModal from "../../components/modals/ConfirmModal";
-import { clearMessagesApi } from "../../api/messageApi";
+import { clearMessagesApi, deleteMessageApi } from "../../api/messageApi";
 import EmojiPicker from 'emoji-picker-react';
 import { useTheme } from "../../context/ThemeContext";
 import { useNotification } from "../../context/NotificationContext";
@@ -113,22 +113,28 @@ const ChatWindow = ({
     setText((prev) => prev + emojiData.emoji);
   };
 
-  const handleDownload = async (url, filename) => {
-    try {
-      const response = await fetch(url);
-      const blob = await response.blob();
-      const blobUrl = window.URL.createObjectURL(blob);
-      const link = document.createElement("a");
-      link.href = blobUrl;
-      link.download = filename || "download";
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      window.URL.revokeObjectURL(blobUrl);
-    } catch (error) {
-      console.error("Download failed:", error);
-      window.open(url, "_blank");
-    }
+  const handleCopyMessage = (text) => {
+    if (!text) return;
+    navigator.clipboard.writeText(text);
+    addNotification("Message copied to clipboard", "success");
+  };
+
+  const handleDeleteMessage = async (messageId) => {
+    setConfirmModal({
+        isOpen: true,
+        title: "Delete Message",
+        message: "Are you sure you want to delete this message? This will remove it for everyone.",
+        type: "danger",
+        onConfirm: async () => {
+            try {
+                await deleteMessageApi(messageId);
+                addNotification("Message deleted", "info");
+                onChatUpdate({ ...activeChat }); // Trigger refresh
+            } catch (err) {
+                addNotification("Failed to delete message", "error");
+            }
+        }
+    });
   };
 
   if (!activeChat) {
@@ -325,109 +331,116 @@ const ChatWindow = ({
             Loading messages...
           </div>
         ) : (
-          messages.map((m) => {
-            const senderId = typeof m.senderId === "string" ? m.senderId : m.senderId?._id;
-            const isMine = senderId === user?._id;
-            
-            // For group chats, show sender name if not me
-            const senderName = typeof m.senderId === "object" ? m.senderId.name : "User";
+          <>
+            {messages.map((m) => {
+              const senderId = typeof m.senderId === "string" ? m.senderId : m.senderId?._id;
+              const isMine = senderId === user?._id;
+              
+              // For group chats, show sender name if not me
+              const senderName = typeof m.senderId === "object" ? m.senderId.name : "User";
 
-            return (
-              <div
-                key={m._id}
-                className={`message-bubble ${isMine ? "msg-sent" : "msg-received"}`}
-                onDoubleClick={() => addReaction(m._id, "❤️")} // Quick reaction
-                title="Double click to like"
-              >
-                {!isMine && (
-                  <div className="msg-sender-info">
-                    <div className="user-avatar-xs">
-                      {m.senderId?.avatar ? (
-                        <img src={getAvatarUrl(m.senderId.avatar)} alt="avatar" />
-                      ) : (
-                        m.senderId?.name?.charAt(0).toUpperCase() || "U"
-                      )}
+              return (
+                <div
+                  key={m._id}
+                  className={`message-bubble ${isMine ? "msg-sent" : "msg-received"}`}
+                  onDoubleClick={() => addReaction(m._id, "❤️")} // Quick reaction
+                  title="Double click to like"
+                >
+                  {!isMine && (
+                    <div className="msg-sender-info">
+                      <div className="user-avatar-xs">
+                        {m.senderId?.avatar ? (
+                          <img src={getAvatarUrl(m.senderId.avatar)} alt="avatar" />
+                        ) : (
+                          m.senderId?.name?.charAt(0).toUpperCase() || "U"
+                        )}
+                      </div>
+                      {isGroup && <span className="msg-sender-name">{senderName}</span>}
                     </div>
-                    {isGroup && <span className="msg-sender-name">{senderName}</span>}
+                  )}
+                  
+                  {/* Image Rendering */}
+                  {m.attachments?.length > 0 ? (
+                      m.attachments.map((att, i) => {
+                          const src = typeof att === 'string' ? att : att?.url;
+                          if (!src) return null;
+
+                          const type = (typeof att === 'object' && att.fileType) 
+                              ? att.fileType 
+                              : (src.match(/\.(mp4|webm)$/i) ? 'video' : 'image');
+
+                          return (
+                            <div key={i} className="msg-attachment-container">
+                                {type === 'video' ? (
+                                    <video src={getImageUrl(src)} controls className="msg-attachment" />
+                                ) : type === 'image' ? (
+                                    <img src={getImageUrl(src)} alt="attachment" className="msg-attachment" />
+                                ) : (
+                                    <a href={getImageUrl(src)} target="_blank" rel="noopener noreferrer" className="file-attachment-link">
+                                        <span>📂</span>
+                                        <span>Download File</span>
+                                    </a>
+                                )}
+
+                                {(type === 'image' || type === 'video') && (
+                                    <button 
+                                        className="download-msg-btn"
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            handleDownload(getImageUrl(src), `chat-media-${i}`);
+                                        }}
+                                        title="Download Media"
+                                    >
+                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                                    </button>
+                                )}
+                            </div>
+                          );
+                      })
+                  ) : null}
+
+                  {m.text && <div className="msg-text">{m.text}</div>}
+                  
+                  {/* Reactions Display */}
+                  {m.reactions && m.reactions.length > 0 && (
+                      <div className="reactions-row" style={{ display: "flex", gap: "2px", marginTop: "4px", justifyContent: isMine ? "flex-end" : "flex-start" }}>
+                          {m.reactions.map((r, idx) => (
+                              <span key={idx} style={{ fontSize: "12px", background: "rgba(0,0,0,0.2)", borderRadius: "10px", padding: "2px 6px" }}>
+                                  {r.emoji}
+                              </span>
+                          ))}
+                      </div>
+                  )}
+                  
+                  <div className="msg-meta">
+                      {formatTime(m.createdAt)}
+                      {isMine && <span>✓</span>} 
                   </div>
-                )}
-                
-                {/* Image Rendering */}
-                {m.attachments?.length > 0 ? (
-                    m.attachments.map((att, i) => {
-                        // Handle both old format (string) and new format (object)
-                        // Safety check: ensure att is not null/undefined if treating as object
-                        const src = typeof att === 'string' ? att : att?.url;
-                        
-                        if (!src) return null; // Skip invalid attachments
 
-                        const type = (typeof att === 'object' && att.fileType) 
-                            ? att.fileType 
-                            : (src.match(/\.(mp4|webm)$/i) ? 'video' : 'image');
-
-                        return (
-                          <div key={i} className="msg-attachment-container">
-                              {type === 'video' ? (
-                                  <video 
-                                      src={getImageUrl(src)} 
-                                      controls 
-                                      className="msg-attachment"
-                                  />
-                              ) : type === 'image' ? (
-                                  <img 
-                                      src={getImageUrl(src)} 
-                                      alt="attachment" 
-                                      className="msg-attachment"
-                                  />
-                              ) : (
-                                  <a 
-                                      href={getImageUrl(src)} 
-                                      target="_blank" 
-                                      rel="noopener noreferrer" 
-                                      className="file-attachment-link"
-                                  >
-                                      <span>📂</span>
-                                      <span>Download File</span>
-                                  </a>
-                              )}
-
-                              {(type === 'image' || type === 'video') && (
-                                  <button 
-                                      className="download-msg-btn"
-                                      onClick={(e) => {
-                                          e.stopPropagation();
-                                          handleDownload(getImageUrl(src), `chat-media-${i}`);
-                                      }}
-                                      title="Download Media"
-                                  >
-                                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-                                  </button>
-                              )}
-                          </div>
-                        );
-                    })
-                ) : null}
-
-                {m.text && <div className="msg-text">{m.text}</div>}
-                
-                {/* Reactions Display */}
-                {m.reactions && m.reactions.length > 0 && (
-                    <div className="reactions-row" style={{ display: "flex", gap: "2px", marginTop: "4px", justifyContent: isMine ? "flex-end" : "flex-start" }}>
-                        {m.reactions.map((r, idx) => (
-                            <span key={idx} style={{ fontSize: "12px", background: "rgba(0,0,0,0.2)", borderRadius: "10px", padding: "2px 6px" }}>
-                                {r.emoji}
-                            </span>
-                        ))}
-                    </div>
-                )}
-                
-                <div className="msg-meta">
-                    {formatTime(m.createdAt)}
-                    {isMine && <span>✓</span>} 
+                  {/* Hover Actions */}
+                  <div className="message-actions-wrapper">
+                      {m.text && (
+                          <button className="msg-action-btn" onClick={() => handleCopyMessage(m.text)} title="Copy text">
+                              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+                          </button>
+                      )}
+                      {isMine && (
+                          <button className="msg-action-btn delete" onClick={() => handleDeleteMessage(m._id)} title="Delete message">
+                              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                          </button>
+                      )}
+                  </div>
                 </div>
-              </div>
-            );
-          })
+              );
+            })}
+            
+            {uploading && (
+               <div className="msg-uploading-card">
+                   <div className="spinner-sm"></div>
+                   <span>Sending file...</span>
+               </div>
+            )}
+          </>
         )}
         
         {/* Typing Bubble */}

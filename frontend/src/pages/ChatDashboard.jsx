@@ -190,6 +190,12 @@ const ChatDashboard = () => {
         }
     });
 
+    socket.on("messageDeleted", ({ chatId, messageId }) => {
+        if (activeChatIdRef.current === chatId) {
+            setMessages(prev => prev.filter(m => m._id !== messageId));
+        }
+    });
+
     return () => {
       window.removeEventListener('userBlockUpdate', handleBlockUpdate);
       socket.off("receiveMessage", handler);
@@ -197,6 +203,7 @@ const ChatDashboard = () => {
       socket.off("groupCreated");
       socket.off("groupRenamed");
       socket.off("groupUpdated");
+      socket.off("messageDeleted");
     };
   }, [socket, user]); // Added user to deps to handle identity-based events
 

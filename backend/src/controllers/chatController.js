@@ -20,7 +20,7 @@ export const getUsers = async (req, res) => {
     }
 
     const users = await User.find(query)
-      .select("_id name email avatar isOnline lastSeen isAdmin")
+      .select("_id name email avatar isOnline lastSeen isAdmin username")
       .limit(50) // Limit results for performance
       .lean(); // Optimize query performance
 
@@ -317,17 +317,33 @@ export const removeFromGroup = async (req, res) => {
   try {
     const { chatId, userId } = req.body;
 
+    const chat = await Chat.findById(chatId);
+    if (!chat) {
+        return res.status(404).json({ message: "Chat not found" });
+    }
+
+    // Security Check: 
+    // 1. You can remove yourself (Leave)
+    // 2. An admin can remove anyone (Kick)
+    const isSelf = req.user._id.toString() === userId;
+    const isAdmin = chat.groupAdmins.some(a => a.toString() === req.user._id.toString());
+
+    if (!isSelf && !isAdmin) {
+        return res.status(403).json({ message: "Only admins can kick users" });
+    }
+
     const removed = await Chat.findByIdAndUpdate(
       chatId,
-      { $pull: { members: userId } },
+      { 
+        $pull: { 
+            members: userId,
+            groupAdmins: userId // Also remove from admins if they were one
+        } 
+      },
       { new: true }
     )
       .populate("members", "-password")
       .populate("groupAdmins", "-password");
-
-    if (!removed) {
-      return res.status(404).json({ message: "Chat not found" });
-    }
 
     // Real-time synchronization
     const io = req.app.get("socketio");
