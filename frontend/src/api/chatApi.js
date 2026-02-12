@@ -41,3 +41,9 @@ export const removeFromGroup = async (chatId, userId) => {
   const res = await API.put("/api/chats/group/remove", { chatId, userId });
   return res.data;
 };
+
+// Delete Group
+export const deleteGroupChat = async (chatId) => {
+    const res = await API.delete(`/api/chats/group/${chatId}`);
+    return res.data;
+};

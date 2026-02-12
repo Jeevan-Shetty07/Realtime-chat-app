@@ -2,7 +2,7 @@ import { useState } from "react";
 import ReactDOM from "react-dom";
 import "../../styles/Chat.css";
 import { getAvatarUrl } from "../../utils/imageHelper";
-import { addToGroup, removeFromGroup, renameGroup } from "../../api/chatApi";
+import { addToGroup, removeFromGroup, renameGroup, deleteGroupChat } from "../../api/chatApi";
 import { useNotification } from "../../context/NotificationContext";
 import ConfirmModal from "./ConfirmModal";
 
@@ -11,6 +11,7 @@ const GroupInfoModal = ({ chat, onClose, onUpdate, allUsers, currentUser }) => {
   const [search, setSearch] = useState("");
   const [loadingAdd, setLoadingAdd] = useState(false);
   const [loadingExit, setLoadingExit] = useState(false);
+  const [loadingDelete, setLoadingDelete] = useState(false);
   const [loadingRename, setLoadingRename] = useState(false);
   const [editingName, setEditingName] = useState(false);
   const [tempName, setTempName] = useState(chat.chatName);
@@ -103,6 +104,30 @@ const GroupInfoModal = ({ chat, onClose, onUpdate, allUsers, currentUser }) => {
                 addNotification("Failed to kick member", "error");
             } finally {
                 setLoadingKick(null);
+            }
+        }
+    });
+  };
+
+  const handleDeleteGroup = async () => {
+    setConfirmModal({
+        isOpen: true,
+        title: "Delete Group",
+        message: "ARE YOU SURE? This will permanently delete the group and all its messages for everyone. This action cannot be undone.",
+        type: "danger",
+        onConfirm: async () => {
+            try {
+                setLoadingDelete(true);
+                await deleteGroupChat(chat._id);
+                // Note: The socket listener in Dashboard will handle state cleanup
+                // and navigation for all members including the admin.
+                // But we can proactively close this modal.
+                onClose();
+            } catch (error) {
+                console.error("Delete group error:", error);
+                addNotification("Failed to delete group", "error");
+            } finally {
+                setLoadingDelete(false);
             }
         }
     });
@@ -235,7 +260,18 @@ const GroupInfoModal = ({ chat, onClose, onUpdate, allUsers, currentUser }) => {
                 )}
             </div>
             
-            <div style={{ marginTop: "24px", paddingTop: "20px", borderTop: "1px solid var(--glass-border)" }}>
+            <div style={{ marginTop: "24px", paddingTop: "20px", borderTop: "1px solid var(--glass-border)", display: "flex", flexDirection: "column", gap: "10px" }}>
+                {isAdmin && (
+                    <button 
+                        className="btn-danger" 
+                        onClick={handleDeleteGroup}
+                        disabled={loadingDelete}
+                        style={{ width: "100%", display: "flex", alignItems: "center", justifyContent: "center", gap: "10px", background: "rgba(239, 68, 68, 0.15)" }}
+                    >
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>
+                        {loadingDelete ? "Deleting..." : "Delete Group"}
+                    </button>
+                )}
                 <button 
                     className="btn-danger" 
                     onClick={handleLeaveGroup}

@@ -6,10 +6,12 @@ import Sidebar from "../components/sidebar/Sidebar";
 import ChatWindow from "../components/chat/ChatWindow";
 import { useContext, useEffect, useState, useRef } from "react";
 import ProfileModal from "../components/modals/ProfileModal";
+import { useNotification } from "../context/NotificationContext";
 import "../styles/Chat.css";
 
 const ChatDashboard = () => {
   const { user, logout } = useContext(AuthContext);
+  const { addNotification } = useNotification();
   const { socket, onlineUsers, typingState } = useSocket();
 
   const [users, setUsers] = useState([]);
@@ -196,6 +198,14 @@ const ChatDashboard = () => {
         }
     });
 
+    socket.on("groupDeleted", ({ chatId }) => {
+        setMyChats(prev => prev.filter(c => c._id !== chatId));
+        if (activeChatIdRef.current === chatId) {
+            setActiveChat(null);
+            addNotification("This group has been deleted by an admin", "info");
+        }
+    });
+
     return () => {
       window.removeEventListener('userBlockUpdate', handleBlockUpdate);
       socket.off("receiveMessage", handler);
@@ -204,6 +214,7 @@ const ChatDashboard = () => {
       socket.off("groupRenamed");
       socket.off("groupUpdated");
       socket.off("messageDeleted");
+      socket.off("groupDeleted");
     };
   }, [socket, user]); // Added user to deps to handle identity-based events
 

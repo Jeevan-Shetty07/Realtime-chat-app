@@ -356,3 +356,47 @@ export const removeFromGroup = async (req, res) => {
     return res.status(500).json({ message: error.message });
   }
 };
+
+// @route   DELETE /api/chats/group/:chatId
+// @desc    Delete a group chat (Admin only)
+export const deleteGroup = async (req, res) => {
+  try {
+    const { chatId } = req.params;
+
+    const chat = await Chat.findById(chatId);
+    if (!chat) {
+        return res.status(404).json({ message: "Chat not found" });
+    }
+
+    if (!chat.isGroupChat) {
+        return res.status(400).json({ message: "Only group chats can be deleted" });
+    }
+
+    // Check if requester is admin
+    const isAdmin = chat.groupAdmins.some(a => a.toString() === req.user._id.toString());
+    if (!isAdmin) {
+        return res.status(403).json({ message: "Only group admins can delete the group" });
+    }
+
+    const members = chat.members; // for socket notification
+
+    // Delete all messages in this chat
+    await Message.deleteMany({ chatId });
+
+    // Delete the chat itself
+    await Chat.findByIdAndDelete(chatId);
+
+    // Socket Notification
+    const io = req.app.get("socketio");
+    if (io) {
+        members.forEach(memberId => {
+            io.to(`user_${memberId.toString()}`).emit("groupDeleted", { chatId });
+        });
+    }
+
+    return res.status(200).json({ message: "Group deleted successfully" });
+  } catch (error) {
+    console.error("🔥 DELETE GROUP ERROR:", error);
+    return res.status(500).json({ message: error.message });
+  }
+};
