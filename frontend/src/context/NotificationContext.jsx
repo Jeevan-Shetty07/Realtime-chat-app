@@ -1,6 +1,6 @@
 import { createContext, useState, useContext, useCallback } from "react";
 import ReactDOM from "react-dom";
-import "../../styles/Notification.css";
+import "../styles/Notification.css";
 
 const NotificationContext = createContext(null);
 
