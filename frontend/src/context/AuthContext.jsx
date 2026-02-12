@@ -9,19 +9,19 @@ export const AuthProvider = ({ children }) => {
   const { user: clerkUser, isLoaded: isUserLoaded } = useUser();
   const { getToken, signOut, isLoaded: isAuthLoaded } = useAuth();
   const [user, setUser] = useState(null);
-  const [localToken, setLocalToken] = useState(localStorage.getItem("token"));
+  const [localToken, setLocalToken] = useState(sessionStorage.getItem("token"));
   const [loadingAuth, setLoadingAuth] = useState(true);
 
   const logout = async () => {
     if (clerkUser) await signOut();
-    localStorage.removeItem("token");
+    sessionStorage.removeItem("token");
     setLocalToken(null);
     setAuthToken(null);
     setUser(null);
   };
 
   const loginLocal = (userData, token) => {
-    localStorage.setItem("token", token);
+    sessionStorage.setItem("token", token);
     setLocalToken(token);
     setAuthToken(token);
     setUser(userData);
@@ -34,7 +34,7 @@ export const AuthProvider = ({ children }) => {
       if (clerkUser) {
         token = await getToken();
       } else {
-        token = localStorage.getItem("token");
+        token = sessionStorage.getItem("token");
       }
 
       if (!token) {
@@ -50,7 +50,7 @@ export const AuthProvider = ({ children }) => {
       console.error("Load user error:", error);
       // If local token fails, clear it
       if (!clerkUser) {
-          localStorage.removeItem("token");
+          sessionStorage.removeItem("token");
           setLocalToken(null);
       }
       setUser(null);
