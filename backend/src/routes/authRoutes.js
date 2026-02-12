@@ -1,11 +1,12 @@
 import express from "express";
-import { getMe, register, login, deleteMe, getAllUsers, getAllGroups, adminDeleteUser, toggleAdminStatus } from "../controllers/authController.js";
+import { getMe, register, login, forgotPassword, deleteMe, getAllUsers, getAllGroups, adminDeleteUser, toggleAdminStatus } from "../controllers/authController.js";
 import { unifiedProtect, adminProtect } from "../middleware/clerkMiddleware.js";
 
 const router = express.Router();
 
 router.post("/register", register);
 router.post("/login", login);
+router.post("/forgot-password", forgotPassword);
 router.get("/me", unifiedProtect, getMe);
 router.delete("/me", unifiedProtect, deleteMe);
 

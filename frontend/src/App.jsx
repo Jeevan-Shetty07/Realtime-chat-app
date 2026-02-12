@@ -62,14 +62,18 @@ const AppRoutes = () => {
   );
 };
 
+import { NotificationProvider } from "./context/NotificationContext";
+
 const App = () => {
   return (
     <ClerkProvider publishableKey={PUBLISHABLE_KEY}>
-      <AuthProvider>
-        <BrowserRouter>
-          <AppRoutes />
-        </BrowserRouter>
-      </AuthProvider>
+      <NotificationProvider>
+        <AuthProvider>
+          <BrowserRouter>
+            <AppRoutes />
+          </BrowserRouter>
+        </AuthProvider>
+      </NotificationProvider>
     </ClerkProvider>
   );
 };

@@ -7,9 +7,11 @@ import API, { setAuthToken } from "../../api/axios";
 import { AuthContext } from "../../context/AuthContext";
 import { getBlockedUsersApi } from "../../api/authApi";
 import ConfirmModal from "./ConfirmModal";
+import { useNotification } from "../../context/NotificationContext";
 
 const ProfileModal = ({ onClose, isForced = false }) => {
   const { user, setUser, deleteAccount, unblockUser } = useContext(AuthContext);
+  const { addNotification } = useNotification();
   const [name, setName] = useState(user?.name || "");
   const [username, setUsername] = useState(user?.username || "");
   const [about, setAbout] = useState(user?.about || "");
@@ -49,7 +51,7 @@ const ProfileModal = ({ onClose, isForced = false }) => {
       setAvatar(url || imageUrl);
     } catch (error) {
       console.error("❌ Avatar upload failed detailed:", error.response?.data || error.message);
-      alert("Failed to upload image. Check console for details.");
+      addNotification("Failed to upload image. Check console for details.", "error");
     } finally {
       setUploading(false);
     }
@@ -120,15 +122,15 @@ const ProfileModal = ({ onClose, isForced = false }) => {
 
   const handleSave = async () => {
     if (!name.trim()) {
-        alert("Name is required");
+        addNotification("Name is required", "warning");
         return;
     }
     if (!username.trim()) {
-        alert("Username is required");
+        addNotification("Username is required", "warning");
         return;
     }
     if (username.length < 3) {
-        alert("Username must be at least 3 characters");
+        addNotification("Username must be at least 3 characters", "warning");
         return;
     }
     
@@ -149,12 +151,12 @@ const ProfileModal = ({ onClose, isForced = false }) => {
       
       console.log("✅ Profile save response:", data);
       setUser(data.user);
-      alert("Profile updated successfully!");
+      addNotification("Profile updated successfully!", "success");
       if (!isForced) onClose();
     } catch (error) {
       console.error("❌ Update profile failed detailed:", error.response?.data || error.message);
       const errorMsg = error?.response?.data?.message || "Failed to update profile";
-      alert(errorMsg);
+      addNotification(errorMsg, "error");
     } finally {
       setLoading(false);
     }
@@ -170,9 +172,10 @@ const ProfileModal = ({ onClose, isForced = false }) => {
             try {
                 setLoading(true);
                 await deleteAccount();
+                addNotification("Account deleted", "info");
                 onClose();
             } catch (error) {
-                alert("Failed to delete account. Please try again.");
+                addNotification("Failed to delete account. Please try again.", "error");
             } finally {
                 setLoading(false);
             }
@@ -184,8 +187,9 @@ const ProfileModal = ({ onClose, isForced = false }) => {
     try {
       await unblockUser(uid);
       setBlockedUsers(prev => prev.filter(u => u._id !== uid));
+      addNotification("User unblocked", "success");
     } catch (err) {
-      alert("Failed to unblock");
+      addNotification("Failed to unblock", "error");
     }
   };
 

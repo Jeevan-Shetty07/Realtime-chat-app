@@ -12,6 +12,12 @@ export const loginUser = async (data) => {
   return res.data;
 };
 
+// Forgot Password
+export const forgotPasswordApi = async (email) => {
+  const res = await API.post("/api/auth/forgot-password", { email });
+  return res.data;
+};
+
 // Google Login
 export const googleLoginApi = async (tokenId) => {
   const res = await API.post("/api/auth/google", { tokenId });

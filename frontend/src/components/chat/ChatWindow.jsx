@@ -9,6 +9,7 @@ import ConfirmModal from "../../components/modals/ConfirmModal";
 import { clearMessagesApi } from "../../api/messageApi";
 import EmojiPicker from 'emoji-picker-react';
 import { useTheme } from "../../context/ThemeContext";
+import { useNotification } from "../../context/NotificationContext";
 
 const ChatWindow = ({
   user,
@@ -24,6 +25,7 @@ const ChatWindow = ({
   onChatUpdate,
 }) => {
   const { user: currentUser, blockUser, unblockUser } = useContext(AuthContext);
+  const { addNotification } = useNotification();
   const [showOptionsMenu, setShowOptionsMenu] = useState(false);
   const [showViewProfile, setShowViewProfile] = useState(false);
   const [showGroupInfo, setShowGroupInfo] = useState(false);
@@ -99,7 +101,7 @@ const ChatWindow = ({
         await sendMessage("", fileType || "file", [{ url, fileType: fileType || "file" }]);
     } catch (error) {
         console.error("Upload failed", error);
-        alert("Image upload failed");
+        addNotification("Image upload failed", "error");
     } finally {
         setUploading(false);
         // Reset input
@@ -195,14 +197,15 @@ const ChatWindow = ({
             onConfirm: async () => {
                 try {
                     await blockUser(otherUser._id);
+                    addNotification(`Blocked ${otherUser.name}`, "info");
                 } catch (err) {
-                    alert("Failed to block user");
+                    addNotification("Failed to block user", "error");
                 }
             }
         });
       }
     } catch (error) {
-      alert("Failed to update block status");
+      addNotification("Failed to update block status", "error");
     }
   };
 
@@ -215,9 +218,10 @@ const ChatWindow = ({
           onConfirm: async () => {
               try {
                   await clearMessagesApi(activeChat._id);
+                  addNotification("Chat cleared", "info");
                   onChatUpdate({ ...activeChat }); // Pass new reference to trigger refresh
               } catch (err) {
-                  alert("Failed to clear chat");
+                  addNotification("Failed to clear chat", "error");
               }
           }
       });

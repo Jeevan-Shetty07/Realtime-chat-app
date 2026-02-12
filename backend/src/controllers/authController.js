@@ -54,7 +54,7 @@ export const register = async (req, res) => {
     const userExists = await User.findOne({ email });
 
     if (userExists) {
-      return res.status(400).json({ message: "User already exists" });
+      return res.status(400).json({ message: "Email already in use" });
     }
 
     const user = await User.create({
@@ -108,6 +108,26 @@ export const login = async (req, res) => {
     }
   } catch (error) {
     console.error("🔥 LOGIN ERROR:", error);
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
+// @route   POST /api/auth/forgot-password
+// @desc    Mock forgot password functionality
+export const forgotPassword = async (req, res) => {
+  try {
+    const { email } = req.body;
+    const user = await User.findOne({ email });
+
+    if (!user) {
+      return res.status(404).json({ message: "User with this email not found" });
+    }
+
+    // In a real app, you'd send an email here.
+    // We'll just return success for the demo.
+    res.json({ message: "Password reset instructions sent to your email" });
+  } catch (error) {
+    console.error("🔥 FORGOT PASSWORD ERROR:", error);
     res.status(500).json({ message: "Server error" });
   }
 };
