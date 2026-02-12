@@ -22,6 +22,6 @@ router.post("/group", unifiedProtect, createGroupChat);
 router.put("/group/rename", unifiedProtect, renameGroup);
 router.put("/group/add", unifiedProtect, addToGroup);
 router.put("/group/remove", unifiedProtect, removeFromGroup);
-router.delete("/group/:chatId", unifiedProtect, deleteGroup);
+router.delete("/group-delete/:chatId", unifiedProtect, deleteGroup);
 
 export default router;

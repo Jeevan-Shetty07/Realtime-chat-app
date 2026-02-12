@@ -90,7 +90,7 @@ const AdminDashboard = () => {
         type: "danger",
         onConfirm: async () => {
             try {
-                await deleteGroupChat(id);
+                await API.delete(`/api/auth/admin/groups/${id}`);
                 setGroups(groups.filter(g => g._id !== id));
             } catch (err) {
                 console.error("Group deletion error:", err);
