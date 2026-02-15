@@ -90,9 +90,23 @@ const ChatWindow = memo(({
     fileInputRef.current?.click();
   }, []);
 
+  const [uploadPreview, setUploadPreview] = useState(null);
+
   const handleFileChange = useCallback(async (e) => {
     const file = e.target.files[0];
     if (!file) return;
+
+    // Create immediate preview
+    const objectUrl = URL.createObjectURL(file);
+    const isImage = file.type.startsWith('image/');
+    const isVideo = file.type.startsWith('video/');
+    const type = isImage ? 'image' : (isVideo ? 'video' : 'file');
+    
+    setUploadPreview({ 
+        url: objectUrl, 
+        type, 
+        name: file.name 
+    });
 
     try {
         setUploading(true);
@@ -103,6 +117,8 @@ const ChatWindow = memo(({
         addNotification("Image upload failed", "error");
     } finally {
         setUploading(false);
+        setUploadPreview(null);
+        URL.revokeObjectURL(objectUrl); // Clean up memory
         if (fileInputRef.current) fileInputRef.current.value = "";
     }
   }, [sendMessage, addNotification]);
@@ -433,9 +449,25 @@ const ChatWindow = memo(({
             })}
             
             {uploading && (
-               <div className="msg-uploading-card">
-                   <div className="spinner-sm"></div>
-                   <span>Sending file...</span>
+               <div className={`msg-uploading-card ${uploadPreview?.type !== 'file' ? 'has-preview' : ''}`}>
+                   {uploadPreview?.type === 'image' || uploadPreview?.type === 'video' ? (
+                       <div className="upload-preview-container">
+                           {uploadPreview.type === 'image' ? (
+                               <img src={uploadPreview.url} alt="Uploading..." className="msg-attachment preview-img" />
+                           ) : (
+                               <video src={uploadPreview.url} className="msg-attachment preview-img" muted />
+                           )}
+                           <div className="upload-overlay">
+                               <div className="spinner-sm"></div>
+                               <span>Sending...</span>
+                           </div>
+                       </div>
+                   ) : (
+                       <>
+                           <div className="spinner-sm"></div>
+                           <span>Sending {uploadPreview?.name || "file"}...</span>
+                       </>
+                   )}
                </div>
             )}
           </>
