@@ -29,7 +29,7 @@ app.use(cors({
     if (allowedOrigins.indexOf(origin) !== -1 || origin.startsWith("http://localhost:")) {
       callback(null, true);
     } else {
-      console.warn(`\u26a0\ufe0f Blocked by CORS: ${origin}`);
+      console.warn(`⚠️ Blocked by CORS: ${origin}`);
       callback(new Error("Not allowed by CORS"));
     }
   },

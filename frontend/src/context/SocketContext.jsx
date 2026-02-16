@@ -12,7 +12,10 @@ export const SocketProvider = ({ children, user }) => {
   });
 
   const socket = useMemo(() => {
-    const newSocket = io(import.meta.env.VITE_API_BASE_URL || "http://localhost:5001", {
+    const url = import.meta.env.VITE_API_BASE_URL || "http://localhost:5001";
+    console.log("🔌 Attempting socket connection to:", url);
+    
+    const newSocket = io(url, {
       transports: ["polling", "websocket"],
       withCredentials: true
     });
