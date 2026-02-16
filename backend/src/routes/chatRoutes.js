@@ -8,7 +8,6 @@ import {
   renameGroup,
   addToGroup,
   removeFromGroup,
-  removeFromGroup,
   deleteGroup,
   hideChat,
 } from "../controllers/chatController.js";

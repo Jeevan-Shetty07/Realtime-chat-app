@@ -409,9 +409,15 @@ export const deleteGroup = async (req, res) => {
 export const hideChat = async (req, res) => {
   try {
     const { chatId } = req.params;
+    console.log("🙈 Hiding chat:", chatId, "for user:", req.user?._id);
     
+    if (!chatId) {
+      return res.status(400).json({ message: "Chat ID is required" });
+    }
+
     // 1. Delete all messages in the chat (as requested: "no message should also delete")
-    await Message.deleteMany({ chatId });
+    const deleteResult = await Message.deleteMany({ chatId });
+    console.log(`🧹 Deleted ${deleteResult.deletedCount} messages for chat ${chatId}`);
 
     // 2. Hide the chat for the user and reset last message preview
     const chat = await Chat.findByIdAndUpdate(
@@ -424,12 +430,14 @@ export const hideChat = async (req, res) => {
     );
 
     if (!chat) {
+      console.log("❌ Chat not found in DB during hide:", chatId);
       return res.status(404).json({ message: "Chat not found" });
     }
 
+    console.log("✅ Chat hidden successfully:", chatId);
     return res.status(200).json({ message: "Chat deleted and hidden successfully" });
   } catch (error) {
-    console.error("🔥 HIDE CHAT ERROR:", error);
-    return res.status(500).json({ message: "Error hiding chat" });
+    console.error("🔥 HIDE CHAT ERROR DETAILS:", error);
+    return res.status(500).json({ message: "Error hiding chat: " + error.message });
   }
 };

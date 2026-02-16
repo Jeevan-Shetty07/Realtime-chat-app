@@ -285,7 +285,8 @@ const ChatDashboard = () => {
       addNotification("Chat deleted", "success");
     } catch (error) {
       console.error("Hide chat error:", error);
-      addNotification("Failed to delete chat", "error");
+      const msg = error.response?.data?.message || "Failed to delete chat";
+      addNotification(msg, "error");
     }
   }, [addNotification]);
 
