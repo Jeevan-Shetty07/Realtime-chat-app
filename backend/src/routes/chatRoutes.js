@@ -8,7 +8,9 @@ import {
   renameGroup,
   addToGroup,
   removeFromGroup,
+  removeFromGroup,
   deleteGroup,
+  hideChat,
 } from "../controllers/chatController.js";
 
 const router = express.Router();
@@ -23,5 +25,6 @@ router.put("/group/rename", unifiedProtect, renameGroup);
 router.put("/group/add", unifiedProtect, addToGroup);
 router.put("/group/remove", unifiedProtect, removeFromGroup);
 router.delete("/group-delete/:chatId", unifiedProtect, deleteGroup);
+router.put("/hide/:chatId", unifiedProtect, hideChat);
 
 export default router;

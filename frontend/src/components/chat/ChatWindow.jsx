@@ -133,6 +133,24 @@ const ChatWindow = memo(({
     addNotification("Message copied to clipboard", "success");
   };
 
+  const handleDownload = async (url, filename) => {
+    try {
+      const response = await fetch(url);
+      const blob = await response.blob();
+      const blobUrl = window.URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = blobUrl;
+      link.download = filename || "download";
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(blobUrl);
+    } catch (error) {
+      console.error("Download failed:", error);
+      addNotification("Download failed", "error");
+    }
+  };
+
   const handleDeleteMessage = async (messageId) => {
     setConfirmModal({
         isOpen: true,

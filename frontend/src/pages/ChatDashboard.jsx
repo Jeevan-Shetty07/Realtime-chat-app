@@ -1,16 +1,19 @@
 import { AuthContext } from "../context/AuthContext";
 import { useSocket } from "../hooks/useSocket";
-import { accessChat, fetchMyChats, fetchUsers } from "../api/chatApi";
+import { accessChat, fetchMyChats, fetchUsers, hideChatApi } from "../api/chatApi";
 import { fetchMessages, markChatSeen, sendMessageApi } from "../api/messageApi";
 import Sidebar from "../components/sidebar/Sidebar";
 import ChatWindow from "../components/chat/ChatWindow";
 import { useContext, useEffect, useState, useRef, useCallback } from "react";
 import ProfileModal from "../components/modals/ProfileModal";
 import { useNotification } from "../context/NotificationContext";
+import LoadingScreen from "../components/common/LoadingScreen";
+import { useTheme } from "../context/ThemeContext";
 import "../styles/Chat.css";
 
 const ChatDashboard = () => {
-  const { user, logout } = useContext(AuthContext);
+  const { user, loadingAuth, logout } = useContext(AuthContext);
+  const { theme } = useTheme();
   const { addNotification } = useNotification();
   const { socket, onlineUsers, typingState } = useSocket();
 
@@ -242,7 +245,7 @@ const ChatDashboard = () => {
   const handleTyping = useCallback(() => {
     if (!activeChat?._id) return;
 
-    socket.emit("typing", { chatId: activeChat._id, userName: user.name });
+    socket.emit("typing", { chatId: activeChat._id, userName: user?.name });
 
     if (typingTimeoutId) clearTimeout(typingTimeoutId);
 
@@ -251,7 +254,7 @@ const ChatDashboard = () => {
     }, 900);
 
     setTypingTimeoutId(id);
-  }, [activeChat?._id, socket, user.name, typingTimeoutId]);
+  }, [activeChat?._id, socket, user?.name, typingTimeoutId]);
 
   const handleNewGroup = useCallback((newGroupChat) => {
       setMyChats((prev) => [newGroupChat, ...prev]);
@@ -271,6 +274,20 @@ const ChatDashboard = () => {
         );
     }
   }, []);
+
+  const handleHideChat = useCallback(async (chatId) => {
+    try {
+      await hideChatApi(chatId);
+      setMyChats((prev) => prev.filter((c) => c._id !== chatId));
+      if (activeChatIdRef.current === chatId) {
+        setActiveChat(null);
+      }
+      addNotification("Chat deleted", "success");
+    } catch (error) {
+      console.error("Hide chat error:", error);
+      addNotification("Failed to delete chat", "error");
+    }
+  }, [addNotification]);
 
   const sendMessage = useCallback(async (content, type = "text", attachments = []) => {
     if (!activeChat?._id) return;
@@ -317,7 +334,11 @@ const ChatDashboard = () => {
     }
   }, [activeChat?._id, socket]);
 
-  if (!user?.username) {
+  if (loadingAuth || !user) {
+    return <LoadingScreen />;
+  }
+
+  if (!user.username) {
     return (
         <div className="onboarding-screen">
           <div className="chat-bg"></div>
@@ -346,6 +367,7 @@ const ChatDashboard = () => {
           if (window.innerWidth <= 768) setShowSidebar(false);
         }}
         onNewGroup={handleNewGroup}
+        onHideChat={handleHideChat}
       />
 
       <ChatWindow

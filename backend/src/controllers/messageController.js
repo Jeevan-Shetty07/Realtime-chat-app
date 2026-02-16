@@ -111,6 +111,7 @@ export const sendMessage = async (req, res) => {
     await Chat.findByIdAndUpdate(chatId, {
       lastMessage: lastMsgText.substring(0, 100), // Limit preview length
       lastMessageAt: new Date(),
+      $set: { hiddenBy: [] } // Resurface for everyone on new message
     });
 
     // Populate sender info

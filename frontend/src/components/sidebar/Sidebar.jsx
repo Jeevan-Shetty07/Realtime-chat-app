@@ -15,6 +15,7 @@ const Sidebar = memo(({
   users,
   startChatWithUser,
   onNewGroup,
+  onHideChat,
 }) => {
   const { theme, toggleTheme } = useTheme();
   const [search, setSearch] = useState("");
@@ -41,19 +42,24 @@ const Sidebar = memo(({
   });
 
   const getChatInfo = (chat) => {
+    if (!chat) return { name: "Unknown", avatar: "?" };
+    
     if (chat.isGroupChat) {
       return {
-        name: chat.chatName,
-        avatar: null, // Default group avatar logic can be here
+        name: chat.chatName || "Group",
+        avatar: null,
         isGroup: true,
         online: false
       };
     }
-    const other = chat.members.find((m) => m._id !== user?._id);
+    
+    const members = Array.isArray(chat.members) ? chat.members : [];
+    const other = members.find((m) => (typeof m === 'string' ? m : m._id) !== user?._id);
+    
     return {
       name: other?.name || "Unknown",
       avatarLink: other?.avatar,
-      avatar: other?.name?.charAt(0).toUpperCase(),
+      avatar: other?.name?.charAt(0).toUpperCase() || "?",
       isGroup: false,
       online: other ? onlineUsers.includes(other._id) : false,
       isBlocked: chat.isBlockedByMe || chat.isBlockingMe,
@@ -167,13 +173,16 @@ const Sidebar = memo(({
                 const seenPairs = new Set();
                 const deduplicated = myChats.filter(chat => {
                     if (chat.isGroupChat) return true;
+                    if (!chat.members || !Array.isArray(chat.members)) return false;
+                    
                     // Sort members IDs to ensure [A,B] and [B,A] are treated same
                     const pairKey = chat.members
-                        .map(m => m._id)
+                        .map(m => typeof m === 'string' ? m : m._id)
+                        .filter(Boolean)
                         .sort()
                         .join("-");
                     
-                    if (seenPairs.has(pairKey)) return false;
+                    if (!pairKey || seenPairs.has(pairKey)) return false;
                     seenPairs.add(pairKey);
                     return true;
                 });
@@ -217,6 +226,18 @@ const Sidebar = memo(({
                                             {chat.unreadCount > 99 ? "99+" : chat.unreadCount}
                                         </div>
                                     )}
+                                    <button 
+                                        className="delete-chat-btn" 
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            if (window.confirm("Are you sure you want to delete this chat? All messages will be permanently deleted and the chat will be hidden until new activity.")) {
+                                                onHideChat(chat._id);
+                                            }
+                                        }}
+                                        title="Delete Chat"
+                                    >
+                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>
+                                    </button>
                                 </div>
                             </div>
                         </div>

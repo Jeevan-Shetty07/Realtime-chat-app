@@ -131,6 +131,7 @@ export const getMyChats = async (req, res) => {
     
     const chats = await Chat.find({
       members: { $in: [req.user._id] },
+      hiddenBy: { $ne: req.user._id }
     })
       .populate("members", "_id name avatar username isOnline lastSeen blockedUsers")
       .populate("groupAdmins", "_id name")
@@ -400,5 +401,35 @@ export const deleteGroup = async (req, res) => {
   } catch (error) {
     console.error("🔥 DELETE GROUP ERROR:", error);
     return res.status(500).json({ message: error.message });
+  }
+};
+
+// @route   PUT /api/chats/hide/:chatId
+// @desc    Hide a chat from the logged-in user
+export const hideChat = async (req, res) => {
+  try {
+    const { chatId } = req.params;
+    
+    // 1. Delete all messages in the chat (as requested: "no message should also delete")
+    await Message.deleteMany({ chatId });
+
+    // 2. Hide the chat for the user and reset last message preview
+    const chat = await Chat.findByIdAndUpdate(
+      chatId,
+      { 
+        $addToSet: { hiddenBy: req.user._id },
+        $set: { lastMessage: "", lastMessageAt: null }
+      },
+      { new: true }
+    );
+
+    if (!chat) {
+      return res.status(404).json({ message: "Chat not found" });
+    }
+
+    return res.status(200).json({ message: "Chat deleted and hidden successfully" });
+  } catch (error) {
+    console.error("🔥 HIDE CHAT ERROR:", error);
+    return res.status(500).json({ message: "Error hiding chat" });
   }
 };

@@ -44,12 +44,15 @@ router.put("/profile", unifiedProtect, async (req, res) => {
     const user = await User.findById(req.user._id);
 
     if (user) {
-      if (username && username !== user.username) {
-        const existingUser = await User.findOne({ username });
-        if (existingUser) {
-          return res.status(400).json({ message: "Username already taken" });
+      if (username) {
+        const lowerUsername = username.toLowerCase();
+        if (lowerUsername !== user.username?.toLowerCase()) {
+            const existingUser = await User.findOne({ username: lowerUsername });
+            if (existingUser) {
+              return res.status(400).json({ message: "Username already taken" });
+            }
+            user.username = lowerUsername;
         }
-        user.username = username;
       }
 
       user.name = name || user.name;

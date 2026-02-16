@@ -45,6 +45,13 @@ const chatSchema = new mongoose.Schema(
       type: Date,
       default: null,
     },
+
+    hiddenBy: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "User",
+      },
+    ],
   },
   { 
     timestamps: true,

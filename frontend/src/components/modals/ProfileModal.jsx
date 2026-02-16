@@ -1,5 +1,5 @@
 import { useState, useRef, useContext, useEffect } from "react";
-import { useAuth } from "@clerk/clerk-react";
+import { useAuth, useUser } from "@clerk/clerk-react";
 import ReactDOM from "react-dom";
 import "../../styles/Chat.css";
 import { uploadFile } from "../../api/uploadApi";
@@ -12,10 +12,11 @@ import { useNotification } from "../../context/NotificationContext";
 const ProfileModal = ({ onClose, isForced = false }) => {
   const { user, setUser, deleteAccount, unblockUser } = useContext(AuthContext);
   const { addNotification } = useNotification();
-  const [name, setName] = useState(user?.name || "");
-  const [username, setUsername] = useState(user?.username || "");
+  const { user: clerkUser } = useUser();
+  const [name, setName] = useState(user?.name || clerkUser?.fullName || "");
+  const [username, setUsername] = useState(user?.username || clerkUser?.username || "");
   const [about, setAbout] = useState(user?.about || "");
-  const [avatar, setAvatar] = useState(user?.avatar || "");
+  const [avatar, setAvatar] = useState(user?.avatar || clerkUser?.imageUrl || "");
   const [loading, setLoading] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [suggestions, setSuggestions] = useState([]);

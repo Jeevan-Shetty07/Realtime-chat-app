@@ -47,3 +47,8 @@ export const deleteGroupChat = async (chatId) => {
     const res = await API.delete(`/api/chats/group-delete/${chatId}`);
     return res.data;
 };
+// Hide Chat
+export const hideChatApi = async (chatId) => {
+    const res = await API.put(`/api/chats/hide/${chatId}`);
+    return res.data;
+};
