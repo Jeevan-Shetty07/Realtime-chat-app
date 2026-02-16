@@ -131,7 +131,7 @@ export const getMyChats = async (req, res) => {
     
     const chats = await Chat.find({
       members: { $in: [req.user._id] },
-      hiddenBy: { $ne: req.user._id }
+      hiddenBy: { $nin: [req.user._id] }
     })
       .populate("members", "_id name avatar username isOnline lastSeen blockedUsers")
       .populate("groupAdmins", "_id name")
@@ -140,9 +140,19 @@ export const getMyChats = async (req, res) => {
       .skip((parseInt(page) - 1) * parseInt(limit))
       .lean();
 
+    // 1. Filter out orphan 1-on-1 chats (where other member is missing/deleted)
+    const validChats = chats.filter(chat => {
+        if (chat.isGroupChat) return true;
+        // Search for 'other' member. If only 1 member exists and it's us, it's an orphan.
+        // Also check if members array has nulls due to population failure
+        const activeMembers = chat.members.filter(m => m !== null);
+        if (activeMembers.length < 2) return false;
+        return true;
+    });
+
     // Calculate unread counts for each chat
     const chatsWithUnread = await Promise.all(
-        chats.map(async (chat) => {
+        validChats.map(async (chat) => {
             const unreadCount = await Message.countDocuments({
                 chatId: chat._id,
                 senderId: { $ne: req.user._id }, // Don't count own messages
