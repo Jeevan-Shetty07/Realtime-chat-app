@@ -1,4 +1,5 @@
 import React from 'react';
+import ReactDOM from 'react-dom';
 
 const ConfirmModal = ({ 
     isOpen, 
@@ -12,7 +13,7 @@ const ConfirmModal = ({
 }) => {
     if (!isOpen) return null;
 
-    return (
+    return ReactDOM.createPortal(
         <div className="modal-overlay" onClick={onClose} style={{ zIndex: 10001 }}>
             <div 
                 className="modal-content confirm-modal-content animate-slide-up" 
@@ -46,7 +47,8 @@ const ConfirmModal = ({
                     </button>
                 </div>
             </div>
-        </div>
+        </div>,
+        document.body
     );
 };
 
