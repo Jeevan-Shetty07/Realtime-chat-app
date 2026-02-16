@@ -4,6 +4,7 @@ import { useTheme } from "../../context/ThemeContext";
 import "../../styles/Chat.css";
 import CreateGroupModal from "../modals/CreateGroupModal";
 import ProfileModal from "../modals/ProfileModal";
+import ConfirmModal from "../modals/ConfirmModal";
 
 const Sidebar = memo(({
   user,
@@ -22,6 +23,7 @@ const Sidebar = memo(({
   const [activeTab, setActiveTab] = useState("chats"); // 'chats' or 'users'
   const [showGroupModal, setShowGroupModal] = useState(false);
   const [showProfileModal, setShowProfileModal] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState({ isOpen: false, chatId: null });
 
   const getUserId = (u) => {
     if (!u) return null;
@@ -230,9 +232,10 @@ const Sidebar = memo(({
                                         className="delete-chat-btn" 
                                         onClick={(e) => {
                                             e.stopPropagation();
-                                            if (window.confirm("Are you sure you want to delete this chat? All messages will be permanently deleted and the chat will be hidden until new activity.")) {
-                                                onHideChat(chat._id);
-                                            }
+                                            setConfirmDelete({
+                                                isOpen: true,
+                                                chatId: chat._id
+                                            });
                                         }}
                                         title="Delete Chat"
                                     >
@@ -294,6 +297,20 @@ const Sidebar = memo(({
             }}
         />
       )}
+      <ConfirmModal 
+        isOpen={confirmDelete.isOpen}
+        title="Delete Chat"
+        message="Are you sure you want to delete this chat? All messages will be permanently deleted and the chat will be hidden until new activity."
+        confirmText="Delete"
+        cancelText="Keep"
+        type="danger"
+        onClose={() => setConfirmDelete({ isOpen: false, chatId: null })}
+        onConfirm={() => {
+            if (confirmDelete.chatId) {
+                onHideChat(confirmDelete.chatId);
+            }
+        }}
+      />
       {showProfileModal && (
         <ProfileModal onClose={() => setShowProfileModal(false)} />
       )}
