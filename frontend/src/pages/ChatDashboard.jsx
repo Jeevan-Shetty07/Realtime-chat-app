@@ -9,6 +9,7 @@ import ProfileModal from "../components/modals/ProfileModal";
 import { useNotification } from "../context/NotificationContext";
 import LoadingScreen from "../components/common/LoadingScreen";
 import { useTheme } from "../context/ThemeContext";
+import ConfirmModal from "../components/modals/ConfirmModal";
 import "../styles/Chat.css";
 
 const ChatDashboard = () => {
@@ -26,6 +27,7 @@ const ChatDashboard = () => {
   const [loadingMessages, setLoadingMessages] = useState(false);
   const [typingTimeoutId, setTypingTimeoutId] = useState(null);
   const [showSidebar, setShowSidebar] = useState(true);
+  const [showExitConfirm, setShowExitConfirm] = useState(false);
   const activeChatIdRef = useRef(null);
 
   // Sync ref with state
@@ -37,8 +39,6 @@ const ChatDashboard = () => {
   useEffect(() => {
     const handleResize = () => {
       if (window.innerWidth <= 768) {
-        // Only hide sidebar on initial small screen load IF a chat is selected
-        // This prevents getting stuck on empty state with no menu
         if (activeChatIdRef.current) {
           setShowSidebar(false);
         }
@@ -46,9 +46,38 @@ const ChatDashboard = () => {
         setShowSidebar(true);
       }
     };
-    handleResize(); // Initial check
+    handleResize();
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
+  }, []);
+
+  // Back button handling for mobile
+  const shouldInterceptRef = useRef(true);
+  useEffect(() => {
+    if (window.innerWidth > 768) return;
+
+    // Initial push to intercept
+    window.history.pushState({ type: 'intercept' }, '');
+
+    const handleBackButton = (e) => {
+      if (!shouldInterceptRef.current) return;
+
+      if (activeChatIdRef.current) {
+        // In a chat? Close it and stay on dashboard
+        setActiveChat(null);
+        setShowSidebar(true);
+        // Re-push state to keep intercepting
+        window.history.pushState({ type: 'intercept' }, '');
+      } else {
+        // On user list? Show exit confirm modal
+        setShowExitConfirm(true);
+        // Re-push state to keep intercepting
+        window.history.pushState({ type: 'intercept' }, '');
+      }
+    };
+
+    window.addEventListener('popstate', handleBackButton);
+    return () => window.removeEventListener('popstate', handleBackButton);
   }, []);
 
   // Load users + my chats
@@ -383,6 +412,21 @@ const ChatDashboard = () => {
         onToggleSidebar={() => setShowSidebar(!showSidebar)}
         users={users}
         onChatUpdate={handleChatUpdate}
+      />
+
+      <ConfirmModal
+        isOpen={showExitConfirm}
+        onClose={() => setShowExitConfirm(false)}
+        onConfirm={() => {
+            // Actually go back and exit
+            shouldInterceptRef.current = false;
+            window.history.go(-2); 
+        }}
+        title="Exit Application?"
+        message="Are you sure you want to exit the website?"
+        confirmText="Exit"
+        cancelText="Stay"
+        type="danger"
       />
     </div>
   );
