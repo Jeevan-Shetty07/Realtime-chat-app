@@ -60,18 +60,21 @@ const ChatDashboard = () => {
     window.history.pushState({ type: 'intercept' }, '');
 
     const handleBackButton = (e) => {
+      console.log("🔄 handleBackButton triggered", { 
+          activeChatId: activeChatIdRef.current, 
+          shouldIntercept: shouldInterceptRef.current 
+      });
       if (!shouldInterceptRef.current) return;
 
       if (activeChatIdRef.current) {
-        // In a chat? Close it and stay on dashboard
+        console.log("📱 Mobile: Closing chat via back button");
+        activeChatIdRef.current = null; // Update ref immediately to prevent race on double click
         setActiveChat(null);
         setShowSidebar(true);
-        // Re-push state to keep intercepting
         window.history.pushState({ type: 'intercept' }, '');
       } else {
-        // On user list? Show exit confirm modal
+        console.log("📱 Mobile: Showing exit confirmation");
         setShowExitConfirm(true);
-        // Re-push state to keep intercepting
         window.history.pushState({ type: 'intercept' }, '');
       }
     };
