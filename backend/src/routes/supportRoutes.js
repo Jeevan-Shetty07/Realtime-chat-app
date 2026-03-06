@@ -9,14 +9,14 @@ import { unifiedProtect, adminProtect } from "../middleware/clerkMiddleware.js";
 
 const router = express.Router();
 
-router.route("/")
-  .post(unifiedProtect, createIssue)
-  .get(unifiedProtect, adminProtect, getAllIssues);
+// Debug route
+router.get("/test", (req, res) => {
+  res.json({ message: "Support router is working!" });
+});
 
-router.route("/my-issues")
-  .get(unifiedProtect, getMyIssues);
-
-router.route("/:id")
-  .patch(unifiedProtect, adminProtect, updateIssue);
+router.post("/", unifiedProtect, createIssue);
+router.get("/", unifiedProtect, adminProtect, getAllIssues);
+router.get("/my-issues", unifiedProtect, getMyIssues);
+router.patch("/:id", unifiedProtect, adminProtect, updateIssue);
 
 export default router;
