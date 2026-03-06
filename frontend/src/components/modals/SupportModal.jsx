@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import ReactDOM from 'react-dom';
 import { createSupportIssue } from '../../api/supportApi';
 import { useNotification } from '../../context/NotificationContext';
+import '../../styles/Support.css';
 
 const SupportModal = ({ isOpen, onClose }) => {
     const [subject, setSubject] = useState("");
@@ -36,54 +37,67 @@ const SupportModal = ({ isOpen, onClose }) => {
     };
 
     return ReactDOM.createPortal(
-        <div className="modal-overlay" onClick={onClose} style={{ zIndex: 5000 }}>
+        <div className="support-modal-overlay" onClick={onClose}>
             <div 
-                className="modal-content animate-slide-up" 
+                className="support-modal-content" 
                 onClick={(e) => e.stopPropagation()}
-                style={{ maxWidth: '500px', width: '90%' }}
             >
-                <div className="modal-header">
-                    <h3 className="modal-title">Support & Feedback</h3>
-                    <button className="close-btn" onClick={onClose}>
-                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                <div className="support-header">
+                    <h3 className="support-title">Support & Feedback</h3>
+                    <button className="support-close-btn" onClick={onClose} aria-label="Close">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                            <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+                        </svg>
                     </button>
                 </div>
 
-                <form onSubmit={handleSubmit} className="modal-body">
-                    <p style={{ color: 'var(--text-secondary)', marginBottom: '20px', fontSize: '0.9rem' }}>
+                <form onSubmit={handleSubmit} className="support-body">
+                    <p className="support-description">
                         Have an issue or suggestion? Let us know and we'll get back to you as soon as possible.
                     </p>
                     
-                    <div className="input-group" style={{ marginBottom: '16px' }}>
-                        <label style={{ display: 'block', marginBottom: '8px', fontSize: '0.85rem', color: 'var(--text-muted)' }}>Subject</label>
+                    <div className="support-input-group">
+                        <label className="support-label">Subject</label>
                         <input 
                             type="text" 
-                            className="glass-input" 
+                            className="support-input" 
                             placeholder="Brief description of the issue"
                             value={subject}
                             onChange={(e) => setSubject(e.target.value)}
                             disabled={loading}
+                            autoFocus
                         />
                     </div>
 
-                    <div className="input-group" style={{ marginBottom: '24px' }}>
-                        <label style={{ display: 'block', marginBottom: '8px', fontSize: '0.85rem', color: 'var(--text-muted)' }}>Message</label>
+                    <div className="support-input-group">
+                        <label className="support-label">Message</label>
                         <textarea 
-                            className="glass-input" 
+                            className="support-textarea" 
                             placeholder="Describe your issue in detail..."
-                            style={{ minHeight: '120px', resize: 'vertical' }}
                             value={message}
                             onChange={(e) => setMessage(e.target.value)}
                             disabled={loading}
                         ></textarea>
                     </div>
 
-                    <div className="modal-actions" style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end' }}>
-                        <button type="button" className="glass-btn" onClick={onClose} disabled={loading}>
+                    <div className="support-actions">
+                        <button type="button" className="support-cancel-btn" onClick={onClose} disabled={loading}>
                             Cancel
                         </button>
-                        <button type="submit" className="btn-primary" disabled={loading} style={{ minWidth: '120px' }}>
-                            {loading ? "Submitting..." : "Submit Issue"}
+                        <button type="submit" className="support-submit-btn" disabled={loading}>
+                            {loading ? (
+                                <>
+                                    <div className="typing-dot" style={{ background: "white" }}></div>
+                                    <span>Submitting...</span>
+                                </>
+                            ) : (
+                                <>
+                                    <span>Submit Issue</span>
+                                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                                        <line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/>
+                                    </svg>
+                                </>
+                            )}
                         </button>
                     </div>
                 </form>
