@@ -179,7 +179,7 @@ const ChatWindow = memo(({
           </button>
           
           <div className="auth-bg-glow" style={{ position: "relative", width: "200px", height: "200px" }}></div>
-          <h2 style={{ zIndex: 1, position: "relative" }}>Welcome to Chat App</h2>
+          <h2 style={{ zIndex: 1, position: "relative" }}>Welcome to BlinkChat</h2>
           <p style={{ zIndex: 1, position: "relative" }}>Select a conversation to start messaging</p>
         </div>
       </div>

@@ -17,6 +17,15 @@ export const unifiedProtect = async (req, res, next) => {
     }
 
     const token = authHeader.split(" ")[1];
+    try {
+      const parts = token.split('.');
+      const header = JSON.parse(Buffer.from(parts[0], 'base64').toString());
+      const payload = JSON.parse(Buffer.from(parts[1], 'base64').toString());
+      console.log("🎫 JWT Header:", header);
+      console.log("📄 JWT Payload:", payload);
+    } catch (e) {
+      console.log("⚠️ Could not parse JWT as JSON:", e.message);
+    }
 
     // Unified Protection Logic
     let decoded;
@@ -25,76 +34,51 @@ export const unifiedProtect = async (req, res, next) => {
 
     // First, try verifying as a Clerk token
     try {
-      decoded = await clerkClient.verifyToken(token);
+      console.log("🎟️ Attempting Clerk token verification...");
+      // For @clerk/clerk-sdk-node v4, provide jwtKey if available
+      decoded = await clerkClient.verifyToken(token, {
+        jwtKey: process.env.CLERK_JWT_KEY
+      });
       userId = decoded.sub;
       isClerk = true;
-      console.log("🎟️ Clerk Token Decoded for ID:", userId);
+      console.log("✅ Clerk Token Verified for sub:", userId);
     } catch (clerkError) {
-      console.log("ℹ️ Not a Clerk token, trying local JWT...");
+      console.log("ℹ️ Clerk verification failed:", clerkError.message);
+      if (clerkError.stack) console.log("🔍 Clerk Error Stack:", clerkError.stack.split('\n')[0]);
+      
       // If not a Clerk token, try verifying as a local JWT
       try {
+        console.log("🎫 Attempting local JWT verification...");
         decoded = jwt.verify(token, process.env.JWT_SECRET || "fallback_secret");
         userId = decoded.id;
-        console.log("🎫 Local JWT Decoded for ID:", userId);
+        console.log("✅ Local JWT Verified for ID:", userId);
       } catch (jwtError) {
-        console.error("❌ Token Verification Failed (Both Clerk and Local):", jwtError.message);
+        console.error("❌ Token Verification Failed (Both Clerk and Local)");
+        console.log("🔍 Local JWT Error:", jwtError.message);
         return res.status(401).json({ message: "Not authorized, token invalid" });
       }
     }
 
     let user;
     if (isClerk) {
+      console.log("🔍 Searching for Clerk user in DB with ID:", userId);
       user = await User.findOne({ clerkId: userId });
       
       if (!user) {
-        console.log("🔍 DB lookup by clerkId failed. Syncing from Clerk metadata...");
-        try {
-          const clerkUsers = await clerkClient.users.getUserList({ userId: [userId] });
-          const clerkUser = clerkUsers[0];
-
-          if (clerkUser) {
-            const email = clerkUser.emailAddresses[0]?.emailAddress;
-            console.log("📧 Clerk user email found:", email);
-            
-            if (email) {
-              // Try finding by email if clerkId lookup failed (to link accounts)
-              user = await User.findOne({ email });
-              if (user) {
-                console.log("🔗 Found existing user by email. Linking to Clerk ID...");
-                user.clerkId = userId;
-                // Copy avatar if missing
-                if (!user.avatar && clerkUser.imageUrl) {
-                    user.avatar = clerkUser.imageUrl;
-                }
-                await user.save();
-              } else {
-                console.log("🆕 No user found by email. Creating new DB record...");
-                const userObj = {
-                  clerkId: userId,
-                  email,
-                  name: `${clerkUser.firstName || ""} ${clerkUser.lastName || ""}`.trim() || "User",
-                  avatar: clerkUser.imageUrl || "",
-                };
-                if (clerkUser.username) userObj.username = clerkUser.username;
-                user = await User.create(userObj);
-                console.log("✨ New user created in DB:", user._id);
-              }
-            } else {
-              console.log("⚠️ No email found for Clerk user!");
-            }
-          } else {
-            console.log("⚠️ Clerk getUserList returned no user for ID:", userId);
+        console.log("🔍 DB lookup by clerkId failed. Checking email in payload:", decoded.email);
+        if (decoded.email) {
+          user = await User.findOne({ email: decoded.email });
+          if (user) {
+            console.log("🔗 Linking existing user by email to Clerk ID");
+            user.clerkId = userId;
+            await user.save();
           }
-        } catch (error) {
-          console.error("❌ Error syncing from Clerk:", error);
         }
-      } else {
-        console.log("✅ User found in DB by clerkId:", user.username || user.name);
       }
     } else {
       // Local user
+      console.log("🔍 Searching for local user in DB with ID:", userId);
       user = await User.findById(userId);
-      if (!user) console.log("⚠️ Local user not found in DB for ID:", userId);
     }
 
     if (!user) {

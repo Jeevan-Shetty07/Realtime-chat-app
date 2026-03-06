@@ -5,6 +5,7 @@ import "../../styles/Chat.css";
 import CreateGroupModal from "../modals/CreateGroupModal";
 import ProfileModal from "../modals/ProfileModal";
 import ConfirmModal from "../modals/ConfirmModal";
+import SupportModal from "../modals/SupportModal";
 
 const Sidebar = memo(({
   user,
@@ -23,6 +24,7 @@ const Sidebar = memo(({
   const [activeTab, setActiveTab] = useState("chats"); // 'chats' or 'users'
   const [showGroupModal, setShowGroupModal] = useState(false);
   const [showProfileModal, setShowProfileModal] = useState(false);
+  const [showSupportModal, setShowSupportModal] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState({ isOpen: false, chatId: null });
 
   const getUserId = (u) => {
@@ -142,6 +144,14 @@ const Sidebar = memo(({
             onClick={() => setShowGroupModal(true)}
         >
             + New Group
+        </button>
+        <button 
+            className="glass-btn" 
+            style={{ padding: "10px", display: "flex", alignItems: "center", justifyContent: "center" }}
+            onClick={() => setShowSupportModal(true)}
+            title="Support & Feedback"
+        >
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
         </button>
       </div>
 
@@ -314,6 +324,10 @@ const Sidebar = memo(({
       {showProfileModal && (
         <ProfileModal onClose={() => setShowProfileModal(false)} />
       )}
+      <SupportModal 
+        isOpen={showSupportModal} 
+        onClose={() => setShowSupportModal(false)} 
+      />
     </div>
   );
 });

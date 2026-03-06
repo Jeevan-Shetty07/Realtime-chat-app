@@ -47,7 +47,7 @@ const userSchema = new mongoose.Schema(
     },
     about: { 
       type: String, 
-      default: "Hey there! I am using Chat App.",
+      default: "Hey there! I am using BlinkChat.",
       maxlength: [150, "About cannot exceed 150 characters"]
     },
     isOnline: { 

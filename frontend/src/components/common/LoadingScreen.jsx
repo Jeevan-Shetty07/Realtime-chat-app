@@ -41,7 +41,7 @@ const LoadingScreen = () => {
                     </svg>
                 </div>
                 
-                <h2 className="loading-title">Realtime Chat</h2>
+                <h2 className="loading-title">BlinkChat</h2>
                 <p className="loading-status">{status}</p>
                 
                 <div className="progress-container">

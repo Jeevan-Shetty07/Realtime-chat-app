@@ -1,4 +1,4 @@
-c# 💎 ChatIo
+c# 💎 BlinkChat
 
 A premium, high-fidelity realtime chat application built with **React**, **Node.js**, **Socket.IO**, and **MongoDB**. Features a stunning **Glassmorphism** design with vibrant mesh backgrounds and silky-smooth interactions.
 
@@ -38,7 +38,7 @@ A premium, high-fidelity realtime chat application built with **React**, **Node.
 ### 1. Repository Setup
 ```bash
 git clone <your-repo-url>
-cd ChatIo
+cd BlinkChat
 ```
 2. Backend
 

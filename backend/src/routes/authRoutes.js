@@ -10,6 +10,7 @@ router.post("/login", login);
 router.post("/forgot-password", forgotPassword);
 router.get("/me", unifiedProtect, getMe);
 router.delete("/me", unifiedProtect, deleteMe);
+router.get("/test-token", unifiedProtect, (req, res) => res.json({ user: req.user, message: "Verification success" }));
 
 // Admin Routes
 router.get("/admin/users", unifiedProtect, adminProtect, getAllUsers);

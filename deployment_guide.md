@@ -1,4 +1,4 @@
-# 🚀 Deployment Guide: ChatIo
+# 🚀 Deployment Guide: BlinkChat
 
 This guide will walk you through hosting your application on **Render** (the easiest platform for Node.js + React apps).
 
