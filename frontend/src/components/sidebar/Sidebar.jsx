@@ -136,7 +136,6 @@ const Sidebar = memo(({
         />
       </div>
       
-      {/* Action Buttons */}
       <div style={{ padding: "0 24px", marginBottom: "12px", display: "flex", gap: "10px" }}>
         <button 
             className="btn btn-primary" 
@@ -145,14 +144,16 @@ const Sidebar = memo(({
         >
             + New Group
         </button>
-        <button 
-            className="glass-btn" 
-            style={{ padding: "10px", display: "flex", alignItems: "center", justifyContent: "center" }}
-            onClick={() => setShowSupportModal(true)}
-            title="Support & Feedback"
-        >
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
-        </button>
+        {!user?.isAdmin && (
+          <button 
+              className="glass-btn" 
+              style={{ padding: "10px", display: "flex", alignItems: "center", justifyContent: "center" }}
+              onClick={() => setShowSupportModal(true)}
+              title="Support & Feedback"
+          >
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+          </button>
+        )}
       </div>
 
       {/* Tabs */}

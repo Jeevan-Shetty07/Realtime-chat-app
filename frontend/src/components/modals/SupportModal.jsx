@@ -1,16 +1,18 @@
-import React, { useState } from 'react';
+import React, { useState, useContext } from 'react';
 import ReactDOM from 'react-dom';
 import { createSupportIssue } from '../../api/supportApi';
 import { useNotification } from '../../context/NotificationContext';
+import { AuthContext } from '../../context/AuthContext';
 import '../../styles/Support.css';
 
 const SupportModal = ({ isOpen, onClose }) => {
+    const { user } = useContext(AuthContext);
     const [subject, setSubject] = useState("");
     const [message, setMessage] = useState("");
     const [loading, setLoading] = useState(false);
     const { addNotification } = useNotification();
 
-    if (!isOpen) return null;
+    if (!isOpen || user?.isAdmin) return null;
 
     const handleSubmit = async (e) => {
         e.preventDefault();
