@@ -187,7 +187,9 @@ const ChatDashboard = () => {
           if (c._id === chatId) {
             return {
               ...c,
-              lastMessage: message.text || (message.attachments?.length > 0 ? "📷 Attachment" : ""),
+              lastMessage: message.isSupportResponse 
+                ? `[Support]: ${message.text.replace("[Support]: ", "")}`
+                : (message.text || (message.attachments?.length > 0 ? "📷 Attachment" : "")),
               lastMessageAt: message.createdAt,
               updatedAt: new Date().toISOString(),
               unreadCount: isActive ? 0 : (c.unreadCount || 0) + 1

@@ -380,7 +380,7 @@ const ChatWindow = memo(({
                   onDoubleClick={() => addReaction(m._id, "❤️")} // Quick reaction
                   title="Double click to like"
                 >
-                  {!isMine && (
+                  {(!isMine || m.isSupportResponse) && (
                     <div className="msg-sender-info">
                       <div className="user-avatar-xs">
                         {m.senderId?.avatar ? (
@@ -389,7 +389,7 @@ const ChatWindow = memo(({
                           m.senderId?.name?.charAt(0).toUpperCase() || "U"
                         )}
                       </div>
-                      {isGroup && <span className="msg-sender-name">{senderName}</span>}
+                      {(isGroup || m.isSupportResponse) && <span className="msg-sender-name">{senderName}</span>}
                     </div>
                   )}
                   

@@ -74,7 +74,7 @@ export const updateIssue = async (req, res) => {
           });
         }
 
-        const statusMsg = `Your support issue "${issue.subject}" is now marked as ${status.toUpperCase().replace("-", " ")}.`;
+        const statusMsg = `[Support]: Your support issue "${issue.subject}" is now marked as ${status.toUpperCase().replace("-", " ")}.`;
 
         // 2. Create the notification message
         const message = await Message.create({
@@ -87,7 +87,7 @@ export const updateIssue = async (req, res) => {
 
         // 3. Update chat preview
         await Chat.findByIdAndUpdate(chat._id, {
-          lastMessage: `[Support]: ${statusMsg.substring(0, 50)}`,
+          lastMessage: statusMsg.substring(0, 60),
           lastMessageAt: new Date(),
           $set: { hiddenBy: [] }
         });
@@ -127,17 +127,18 @@ export const updateIssue = async (req, res) => {
       }
 
       // 2. Create the support message
+      const supportText = `[Support]: ${adminResponse}`;
       const message = await Message.create({
         chatId: chat._id,
         senderId: req.user._id,
-        text: adminResponse,
+        text: supportText,
         isSupportResponse: true,
         seenBy: [req.user._id],
       });
 
       // 3. Update chat preview
       await Chat.findByIdAndUpdate(chat._id, {
-        lastMessage: `[Support]: ${adminResponse.substring(0, 50)}`,
+        lastMessage: supportText.substring(0, 60),
         lastMessageAt: new Date(),
         $set: { hiddenBy: [] }
       });
