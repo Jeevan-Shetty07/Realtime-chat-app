@@ -264,19 +264,6 @@ const AdminDashboard = () => {
               {tab.charAt(0).toUpperCase() + tab.slice(1)}
             </button>
           ))}
-          <button 
-            onClick={async () => {
-                try {
-                    const data = await getAllSupportIssues();
-                    alert(`Support API returned ${Array.isArray(data) ? data.length : 'not an array'} items: ` + JSON.stringify(data));
-                } catch (e) {
-                    alert(`Support API FAILED: ${e.message}`);
-                }
-            }}
-            style={{ marginLeft: 'auto', background: '#ef4444', color: 'white', border: 'none', borderRadius: '4px', padding: '4px 8px', fontSize: '10px' }}
-          >
-            DEBUG API
-          </button>
         </div>
 
         <div className="admin-controls">

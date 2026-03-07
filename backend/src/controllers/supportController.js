@@ -53,8 +53,8 @@ export const updateIssue = async (req, res) => {
       return res.status(404).json({ message: "Issue not found" });
     }
 
-    if (status) issue.status = status;
-    if (adminResponse) issue.adminResponse = adminResponse;
+    if (status !== undefined) issue.status = status;
+    if (adminResponse !== undefined) issue.adminResponse = adminResponse;
 
     const updatedIssue = await issue.save();
     res.status(200).json(updatedIssue);
