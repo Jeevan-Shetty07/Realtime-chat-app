@@ -41,12 +41,12 @@ app.use(cors({
 app.use(express.json());
 
 // Routes
+app.use("/api/support", supportRoutes);
 app.use("/api/auth", authRoutes);
 app.use("/api/chats", chatRoutes);
 app.use("/api/messages", messageRoutes);
 app.use("/api/upload", uploadRoutes);
 app.use("/api/users", userRoutes);
-app.use("/api/support", supportRoutes);
 
 // Serve static files
 const __dirname = path.resolve();
