@@ -35,10 +35,20 @@ export const unifiedProtect = async (req, res, next) => {
     // First, try verifying as a Clerk token
     try {
       console.log("🎟️ Attempting Clerk token verification...");
-      // For @clerk/clerk-sdk-node v4, provide jwtKey if available
-      decoded = await clerkClient.verifyToken(token, {
-        jwtKey: process.env.CLERK_JWT_KEY
-      });
+      
+      // Determine if CLERK_JWT_KEY is a Publishable Key (starts with pk_) 
+      // or an actual Public Key (usually starts with 'ssh-rsa', '-----BEGIN PUBLIC KEY-----', or is long base64).
+      // If it's a Publishable Key, we should NOT pass it as jwtKey, as clerkClient.verifyToken
+      // expects a PEM or base64 encoded string of the Public Key, not the Publishable Key.
+      const rawJwtKey = process.env.CLERK_JWT_KEY;
+      const isPublishableKey = rawJwtKey && (rawJwtKey.startsWith('pk_test_') || rawJwtKey.startsWith('pk_live_'));
+      
+      const verificationOptions = {};
+      if (rawJwtKey && !isPublishableKey) {
+        verificationOptions.jwtKey = rawJwtKey;
+      }
+
+      decoded = await clerkClient.verifyToken(token, verificationOptions);
       userId = decoded.sub;
       isClerk = true;
       console.log("✅ Clerk Token Verified for sub:", userId);
