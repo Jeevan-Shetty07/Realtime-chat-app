@@ -48,7 +48,18 @@ app.use(cors({
 app.use(express.json());
 
 // Routes
-app.get("/api/health", (req, res) => res.json({ status: "ok", timestamp: new Date(), env: process.env.NODE_ENV }));
+app.get("/health", (req, res) => {
+  console.log("🟢 HIT /health");
+  res.send("BlinkChat Backend is Healthy (Top Level)");
+});
+
+const healthRouter = express.Router();
+healthRouter.get("/", (req, res) => {
+  console.log("🟢 HIT /api/health");
+  res.json({ status: "ok", msg: "v7-router-health", time: new Date() });
+});
+app.use("/api/health", healthRouter);
+
 app.use("/api/support", supportRoutes);
 app.use("/api/auth", authRoutes);
 app.use("/api/chats", chatRoutes);
