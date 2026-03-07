@@ -11,6 +11,12 @@ import supportRoutes from "./routes/supportRoutes.js";
 
 const app = express();
 
+// ABSOLUTE TOP LOGGER (Before everything)
+app.use((req, res, next) => {
+  console.log(`📍 TOP-LEVEL: ${req.method} ${req.originalUrl || req.url}`);
+  next();
+});
+
 // Request Logger
 app.use((req, res, next) => {
   console.log(`📡 [${new Date().toISOString()}] ${req.method} ${req.originalUrl || req.url}`);
