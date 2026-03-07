@@ -13,7 +13,8 @@ const app = express();
 
 // Request Logger
 app.use((req, res, next) => {
-  console.log(`📡 [${new Date().toISOString()}] ${req.method} ${req.url}`);
+  console.log(`📡 [${new Date().toISOString()}] ${req.method} ${req.originalUrl || req.url}`);
+  console.log(`🏠 Host: ${req.headers.host} | Origin: ${req.headers.origin}`);
   next();
 });
 
@@ -41,6 +42,7 @@ app.use(cors({
 app.use(express.json());
 
 // Routes
+app.get("/api/health", (req, res) => res.json({ status: "ok", timestamp: new Date(), env: process.env.NODE_ENV }));
 app.use("/api/support", supportRoutes);
 app.use("/api/auth", authRoutes);
 app.use("/api/chats", chatRoutes);
