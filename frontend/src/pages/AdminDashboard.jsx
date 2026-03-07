@@ -6,6 +6,7 @@ import "../styles/Chat.css";
 import ConfirmModal from "../components/modals/ConfirmModal";
 import { useNotification } from "../context/NotificationContext";
 import { getAllSupportIssues, updateSupportIssue } from "../api/supportApi";
+import ReplyModal from "../components/modals/ReplyModal";
 
 const AdminDashboard = () => {
   const { user } = useContext(AuthContext);
@@ -24,6 +25,11 @@ const AdminDashboard = () => {
       onConfirm: () => {},
       type: "danger"
   });
+  const [replyModal, setReplyModal] = useState({
+      isOpen: false,
+      issue: null
+  });
+  const [showSuccessCard, setShowSuccessCard] = useState(false);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -99,19 +105,31 @@ const AdminDashboard = () => {
     try {
       const updated = await updateSupportIssue(id, { status });
       setIssues(issues.map(i => i._id === id ? { ...i, status: updated.status } : i));
+      addNotification(`Status updated to ${status}`, "success");
     } catch (err) {
       addNotification("Failed to update status", "error");
     }
   };
 
   const handleRespondToIssue = (issue) => {
-    const resp = prompt("Enter response to user:", issue.adminResponse || "");
-    if (resp !== null) {
-      updateSupportIssue(issue._id, { adminResponse: resp })
-        .then(updated => {
-          setIssues(issues.map(i => i._id === issue._id ? { ...i, adminResponse: updated.adminResponse } : i));
-        })
-        .catch(() => addNotification("Failed to save response", "error"));
+    setReplyModal({ isOpen: true, issue });
+  };
+
+  const handleSendReply = async (text) => {
+    if (!replyModal.issue) return;
+    
+    try {
+      const updated = await updateSupportIssue(replyModal.issue._id, { adminResponse: text });
+      setIssues(issues.map(i => i._id === replyModal.issue._id ? { ...i, adminResponse: updated.adminResponse } : i));
+      setReplyModal({ isOpen: false, issue: null });
+      
+      // Show success card
+      setShowSuccessCard(true);
+      setTimeout(() => setShowSuccessCard(false), 3000);
+      
+      addNotification("Reply sent successfully", "success");
+    } catch (err) {
+      addNotification("Failed to save response", "error");
     }
   };
 
@@ -248,6 +266,14 @@ const AdminDashboard = () => {
       <div className="admin-content glass-panel">
         <div className="admin-header">
           <h1 className="auth-title">Admin Dashboard</h1>
+          {showSuccessCard && (
+            <div className="animate-slide-down" style={{ position: "fixed", top: "20px", left: "50%", transform: "translateX(-50%)", zIndex: 3000 }}>
+              <div className="glass-card" style={{ padding: "12px 24px", background: "rgba(34, 197, 94, 0.2)", border: "1px solid #22c55e", color: "white", borderRadius: "20px", display: "flex", alignItems: "center", gap: "8px" }}>
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                Reply Sent Successfully!
+              </div>
+            </div>
+          )}
           <button className="back-btn-premium" onClick={() => window.location.href="/"}>Back</button>
         </div>
 
@@ -272,6 +298,14 @@ const AdminDashboard = () => {
 
         {renderContent()}
       </div>
+
+      <ReplyModal 
+        isOpen={replyModal.isOpen}
+        subject={replyModal.issue?.subject}
+        initialValue={replyModal.issue?.adminResponse}
+        onClose={() => setReplyModal({ isOpen: false, issue: null })}
+        onConfirm={handleSendReply}
+      />
 
       <ConfirmModal 
         isOpen={confirmModal.isOpen} 

@@ -55,7 +55,59 @@ export const updateIssue = async (req, res) => {
       return res.status(404).json({ message: "Issue not found" });
     }
 
-    if (status !== undefined) issue.status = status;
+    if (status !== undefined) {
+      const oldStatus = issue.status;
+      issue.status = status;
+      
+      // Notify user if status changed
+      if (oldStatus !== status) {
+        // 1. Find or create 1-on-1 chat
+        let chat = await Chat.findOne({
+          members: { $all: [req.user._id, issue.user] },
+          isGroupChat: false,
+        });
+
+        if (!chat) {
+          chat = await Chat.create({
+            members: [req.user._id, issue.user],
+            isGroupChat: false,
+          });
+        }
+
+        const statusMsg = `Your support issue "${issue.subject}" is now marked as ${status.toUpperCase().replace("-", " ")}.`;
+
+        // 2. Create the notification message
+        const message = await Message.create({
+          chatId: chat._id,
+          senderId: req.user._id,
+          text: statusMsg,
+          isSupportResponse: true,
+          seenBy: [req.user._id],
+        });
+
+        // 3. Update chat preview
+        await Chat.findByIdAndUpdate(chat._id, {
+          lastMessage: `[Support]: ${statusMsg.substring(0, 50)}`,
+          lastMessageAt: new Date(),
+          $set: { hiddenBy: [] }
+        });
+
+        // 4. Emit socket event
+        const io = req.app.get("socketio");
+        if (io) {
+          const populatedMsg = await Message.findById(message._id)
+            .populate("senderId", "_id name avatar username")
+            .lean();
+
+          [req.user._id, issue.user].forEach(userId => {
+            io.to(`user_${userId.toString()}`).emit("receiveMessage", {
+              chatId: chat._id,
+              message: populatedMsg,
+            });
+          });
+        }
+      }
+    }
     
     // Create a chat message if there's a new admin response
     if (adminResponse !== undefined && adminResponse.trim() !== "") {
