@@ -61,7 +61,12 @@ app.get("/", (req, res) => {
 
 // 404 fallback
 app.use((req, res, next) => {
-  res.status(404).json({ message: "Route not found" });
+  console.log(`🔍 404 HIT: ${req.method} ${req.originalUrl || req.url} | Path: ${req.path}`);
+  res.status(404).json({ 
+    message: "Route not found", 
+    requested: req.method + " " + (req.originalUrl || req.url),
+    timestamp: new Date()
+  });
 });
 
 // Error Handler

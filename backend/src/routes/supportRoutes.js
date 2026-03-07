@@ -9,6 +9,12 @@ import { unifiedProtect, adminProtect } from "../middleware/clerkMiddleware.js";
 
 const router = express.Router();
 
+// Router-level logger
+router.use((req, res, next) => {
+  console.log(`🛣️ ENTERED supportRouter: ${req.method} ${req.url}`);
+  next();
+});
+
 router.get("/test", (req, res) => {
   res.json({ message: "Support router is working!" });
 });
