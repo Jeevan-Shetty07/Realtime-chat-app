@@ -369,7 +369,9 @@ const ChatWindow = memo(({
               const isMine = senderId === user?._id;
               
               // For group chats, show sender name if not me
-              const senderName = typeof m.senderId === "object" ? m.senderId.name : "User";
+              const senderName = m.isSupportResponse 
+                ? "[Support] Support Team" 
+                : (typeof m.senderId === "object" ? m.senderId.name : "User");
 
               return (
                 <div

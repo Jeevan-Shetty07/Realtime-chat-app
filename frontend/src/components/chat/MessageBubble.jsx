@@ -32,7 +32,11 @@ const MessageBubble = ({ message }) => {
             fontWeight: "600",
           }}
         >
-          {isMe ? "You" : message?.senderId?.name || "User"}
+          {message?.isSupportResponse ? (
+            <span style={{ color: "#f87171" }}>[Support] Support Team</span>
+          ) : (
+            isMe ? "You" : message?.senderId?.name || "User"
+          )}
         </div>
 
         <div style={{ fontSize: "14px", lineHeight: "1.4", overflowWrap: "break-word", wordBreak: "break-word" }}>

@@ -1,4 +1,6 @@
 import Support from "../models/Support.js";
+import Chat from "../models/Chat.js";
+import Message from "../models/Message.js";
 
 // @desc    Create a new support issue
 // @route   POST /api/support
@@ -54,7 +56,57 @@ export const updateIssue = async (req, res) => {
     }
 
     if (status !== undefined) issue.status = status;
-    if (adminResponse !== undefined) issue.adminResponse = adminResponse;
+    
+    // Create a chat message if there's a new admin response
+    if (adminResponse !== undefined && adminResponse.trim() !== "") {
+      issue.adminResponse = adminResponse;
+      
+      // 1. Find or create 1-on-1 chat
+      let chat = await Chat.findOne({
+        members: { $all: [req.user._id, issue.user] },
+        isGroupChat: false,
+      });
+
+      if (!chat) {
+        chat = await Chat.create({
+          members: [req.user._id, issue.user],
+          isGroupChat: false,
+        });
+      }
+
+      // 2. Create the support message
+      const message = await Message.create({
+        chatId: chat._id,
+        senderId: req.user._id,
+        text: adminResponse,
+        isSupportResponse: true,
+        seenBy: [req.user._id],
+      });
+
+      // 3. Update chat preview
+      await Chat.findByIdAndUpdate(chat._id, {
+        lastMessage: `[Support]: ${adminResponse.substring(0, 50)}`,
+        lastMessageAt: new Date(),
+        $set: { hiddenBy: [] }
+      });
+
+      // 4. Emit socket event
+      const io = req.app.get("socketio");
+      if (io) {
+        const populatedMsg = await Message.findById(message._id)
+          .populate("senderId", "_id name avatar username")
+          .lean();
+
+        [req.user._id, issue.user].forEach(userId => {
+          io.to(`user_${userId.toString()}`).emit("receiveMessage", {
+            chatId: chat._id,
+            message: populatedMsg,
+          });
+        });
+      }
+    } else if (adminResponse !== undefined) {
+      issue.adminResponse = adminResponse; // Allow clearing if empty
+    }
 
     const updatedIssue = await issue.save();
     res.status(200).json(updatedIssue);

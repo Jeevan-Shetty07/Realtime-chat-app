@@ -65,6 +65,10 @@ const messageSchema = new mongoose.Schema(
     isEdited: {
         type: Boolean,
         default: false
+    },
+    isSupportResponse: {
+        type: Boolean,
+        default: false
     }
   },
   { 
