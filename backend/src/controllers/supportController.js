@@ -161,6 +161,12 @@ export const updateIssue = async (req, res) => {
       issue.adminResponse = adminResponse; // Allow clearing if empty
     }
 
+    // If status is closed, delete the issue after all notifications are sent
+    if (status === "closed") {
+      await Support.findByIdAndDelete(req.params.id);
+      return res.status(200).json({ message: "Issue closed and deleted successfully", deleted: true });
+    }
+
     const updatedIssue = await issue.save();
     res.status(200).json(updatedIssue);
   } catch (error) {
